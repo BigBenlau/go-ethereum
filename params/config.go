@@ -308,7 +308,7 @@ func (c *ChainConfig) Description() string {
 	if network == "" {
 		network = "unknown"
 	}
-	log.Info("TEst", c.ChainID)
+	log.Info("TEst", c.ChainID.String())
 	banner += fmt.Sprintf("Chain ID:  %v (%s)\n", c.ChainID, network)
 	switch {
 	case c.Ethash != nil:
