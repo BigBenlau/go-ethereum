@@ -21,6 +21,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 )
 
 // Genesis hashes to enforce below configs on.
@@ -307,6 +308,7 @@ func (c *ChainConfig) Description() string {
 	if network == "" {
 		network = "unknown"
 	}
+	log.Info("TEst", c.ChainID)
 	banner += fmt.Sprintf("Chain ID:  %v (%s)\n", c.ChainID, network)
 	switch {
 	case c.Ethash != nil:
