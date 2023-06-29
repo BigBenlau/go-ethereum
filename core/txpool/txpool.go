@@ -212,7 +212,7 @@ func (p *TxPool) Add(txs []*Transaction, local bool, sync bool) []error {
 	//
 	// We also need to track how the transactions were split across the subpools,
 	// so we can piece back the returned errors into the original order.
-	fmt.Sprintf("Txpool Add.")
+	log.Info("Txpool/Add start.")
 	txsets := make([][]*Transaction, len(p.subpools))
 	splits := make([]int, len(txs))
 
@@ -222,6 +222,7 @@ func (p *TxPool) Add(txs []*Transaction, local bool, sync bool) []error {
 
 		// Try to find a subpool that accepts the transaction
 		for j, subpool := range p.subpools {
+			log.Info("%s", subpool)
 			if subpool.Filter(tx.Tx) {
 				txsets[j] = append(txsets[j], tx)
 				splits[i] = j

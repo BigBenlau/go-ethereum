@@ -244,7 +244,7 @@ type txpoolResetRequest struct {
 // transactions from the network.
 func New(config Config, chain BlockChain) *LegacyPool {
 	// Sanitize the input to ensure no vulnerable gas prices are set
-	log.Info(":egacyPool/new start.")
+	log.Info("LegacyPool/new start.")
 	config = (&config).sanitize()
 
 	// Create the transaction pool with its initial settings
@@ -274,7 +274,7 @@ func New(config Config, chain BlockChain) *LegacyPool {
 	if !config.NoLocals && config.Journal != "" {
 		pool.journal = newTxJournal(config.Journal)
 	}
-	log.Info(":egacyPool/new end.")
+	log.Info("LegacyPool/new end.")
 	return pool
 }
 
