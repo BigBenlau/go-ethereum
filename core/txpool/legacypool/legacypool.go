@@ -639,6 +639,7 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 	log.Info("LegacyPool/add **.")
 	// If the transaction is already known, discard it
 	hash := tx.Hash()
+	log.Info(hash.Hex())
 	if pool.all.Get(hash) != nil {
 		log.Trace("Discarding already known transaction", "hash", hash)
 		knownTxMeter.Mark(1)
