@@ -222,7 +222,7 @@ func (p *TxPool) Add(txs []*Transaction, local bool, sync bool) []error {
 
 		// Try to find a subpool that accepts the transaction
 		for j, subpool := range p.subpools {
-			log.Info("%s", subpool)
+			log.Info(fmt.Sprintf(subpool.pending))
 			if subpool.Filter(tx.Tx) {
 				txsets[j] = append(txsets[j], tx)
 				splits[i] = j
