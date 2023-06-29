@@ -24,6 +24,7 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/event"
+	"github.com/ethereum/go-ethereum/log"
 )
 
 // TxStatus is the current status of a transaction as seen by the pool.
@@ -63,7 +64,7 @@ func New(gasTip *big.Int, chain BlockChain, subpools []SubPool) (*TxPool, error)
 	// Retrieve the current head so that all subpools and this main coordinator
 	// pool will have the same starting state, even if the chain moves forward
 	// during initialization.
-	fmt.Sprintf("txpool/new start.%v", 1)
+	log.Info("txpool/new start.")
 	head := chain.CurrentBlock()
 
 	pool := &TxPool{
@@ -79,7 +80,7 @@ func New(gasTip *big.Int, chain BlockChain, subpools []SubPool) (*TxPool, error)
 		}
 	}
 	go pool.loop(head, chain)
-	fmt.Sprintf("txpool/new end.%v", 2)
+	log.Info("txpool/new end.")
 	return pool, nil
 }
 
