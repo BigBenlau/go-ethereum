@@ -544,7 +544,8 @@ func (pool *LegacyPool) Pending(enforceTips bool) map[common.Address][]*types.Tr
 		if len(txs) > 0 {
 			pending[addr] = txs
 		}
-	log.Info("LegacyPool/Pending End.")
+		log.Info("LegacyPool/Pending End.")
+	}
 	return pending
 }
 
