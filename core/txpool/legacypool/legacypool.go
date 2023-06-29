@@ -244,6 +244,7 @@ type txpoolResetRequest struct {
 // transactions from the network.
 func New(config Config, chain BlockChain) *LegacyPool {
 	// Sanitize the input to ensure no vulnerable gas prices are set
+	log.Info(":egacyPool/new start.")
 	config = (&config).sanitize()
 
 	// Create the transaction pool with its initial settings
@@ -273,12 +274,14 @@ func New(config Config, chain BlockChain) *LegacyPool {
 	if !config.NoLocals && config.Journal != "" {
 		pool.journal = newTxJournal(config.Journal)
 	}
+	log.Info(":egacyPool/new end.")
 	return pool
 }
 
 // Filter returns whether the given transaction can be consumed by the legacy
 // pool, specifically, whether it is a Legacy, AccessList or Dynamic transaction.
 func (pool *LegacyPool) Filter(tx *types.Transaction) bool {
+	log.Info("legacypool/filter.")
 	switch tx.Type() {
 	case types.LegacyTxType, types.AccessListTxType, types.DynamicFeeTxType:
 		return true
@@ -293,6 +296,7 @@ func (pool *LegacyPool) Filter(tx *types.Transaction) bool {
 // goroutines will be spun up and the pool deemed operational afterwards.
 func (pool *LegacyPool) Init(gasTip *big.Int, head *types.Header) error {
 	// Set the basic pool parameters
+	log.Info("LegacyPool/init start.")
 	pool.gasTip.Store(gasTip)
 	pool.reset(nil, head)
 
@@ -311,7 +315,9 @@ func (pool *LegacyPool) Init(gasTip *big.Int, head *types.Header) error {
 		}
 	}
 	pool.wg.Add(1)
+	log.Info("LegacyPool/init before go.")
 	go pool.loop()
+	log.Info("LegacyPool/init after go.")
 	return nil
 }
 
@@ -319,6 +325,7 @@ func (pool *LegacyPool) Init(gasTip *big.Int, head *types.Header) error {
 // outside blockchain events as well as for various reporting and transaction
 // eviction events.
 func (pool *LegacyPool) loop() {
+	log.Info("LegacyPool/loop start.")
 	defer pool.wg.Done()
 
 	var (

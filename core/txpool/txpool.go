@@ -132,6 +132,7 @@ func (p *TxPool) loop(head *types.Header, chain BlockChain) {
 		resetDone = make(chan *types.Header)
 	)
 	var errc chan error
+	log.Info("txpool/loop out error.")
 	for errc == nil {
 		// Something interesting might have happened, run a reset if there is
 		// one needed but none is running. The resetter will run on its own
@@ -168,6 +169,7 @@ func (p *TxPool) loop(head *types.Header, chain BlockChain) {
 		}
 	}
 	// Notify the closer of termination (no error possible for now)
+	log.Info("txpool/loop end.")
 	errc <- nil
 }
 
