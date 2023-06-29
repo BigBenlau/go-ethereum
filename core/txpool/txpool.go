@@ -89,6 +89,7 @@ func (p *TxPool) Close() error {
 	var errs []error
 
 	// Terminate the reset loop and wait for it to finish
+	log.Info("txpool/close start.")
 	errc := make(chan error)
 	p.quit <- errc
 	if err := <-errc; err != nil {
@@ -104,6 +105,7 @@ func (p *TxPool) Close() error {
 	if len(errs) > 0 {
 		return fmt.Errorf("subpool close errors: %v", errs)
 	}
+	log.Info("txpool/close end.")
 	return nil
 }
 
@@ -112,6 +114,7 @@ func (p *TxPool) Close() error {
 // eviction events.
 func (p *TxPool) loop(head *types.Header, chain BlockChain) {
 	// Subscribe to chain head events to trigger subpool resets
+	log.Info("txpool/loop start.")
 	var (
 		newHeadCh  = make(chan core.ChainHeadEvent)
 		newHeadSub = chain.SubscribeChainHeadEvent(newHeadCh)
