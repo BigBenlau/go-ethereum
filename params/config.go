@@ -309,6 +309,7 @@ func (c *ChainConfig) Description() string {
 		network = "unknown"
 	}
 	log.Info("TEst", c.ChainID.String())
+	fmt.Sprintf("TEST Config. %v", c.ChainID.String())
 	banner += fmt.Sprintf("Chain ID:  %v (%s)\n", c.ChainID, network)
 	switch {
 	case c.Ethash != nil:
