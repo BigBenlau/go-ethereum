@@ -176,6 +176,7 @@ func (p *TxPool) loop(head *types.Header, chain BlockChain) {
 // SetGasTip updates the minimum gas tip required by the transaction pool for a
 // new transaction, and drops all transactions below this threshold.
 func (p *TxPool) SetGasTip(tip *big.Int) {
+	log.Info("txpool/SetGasTip.")
 	for _, subpool := range p.subpools {
 		subpool.SetGasTip(tip)
 	}
@@ -184,6 +185,7 @@ func (p *TxPool) SetGasTip(tip *big.Int) {
 // Has returns an indicator whether the pool has a transaction cached with the
 // given hash.
 func (p *TxPool) Has(hash common.Hash) bool {
+	log.Info("txpool/Has.")
 	for _, subpool := range p.subpools {
 		if subpool.Has(hash) {
 			return true
@@ -194,6 +196,7 @@ func (p *TxPool) Has(hash common.Hash) bool {
 
 // Get returns a transaction if it is contained in the pool, or nil otherwise.
 func (p *TxPool) Get(hash common.Hash) *Transaction {
+	log.Info("txpool/Get.")
 	for _, subpool := range p.subpools {
 		if tx := subpool.Get(hash); tx != nil {
 			return tx
@@ -222,7 +225,7 @@ func (p *TxPool) Add(txs []*Transaction, local bool, sync bool) []error {
 
 		// Try to find a subpool that accepts the transaction
 		for j, subpool := range p.subpools {
-			log.Info(fmt.Sprintf(subpool.pending))
+			// log.Info(fmt.Sprintf(subpool.pending))
 			if subpool.Filter(tx.Tx) {
 				txsets[j] = append(txsets[j], tx)
 				splits[i] = j
@@ -247,12 +250,14 @@ func (p *TxPool) Add(txs []*Transaction, local bool, sync bool) []error {
 		errs[i] = errsets[split][0]
 		errsets[split] = errsets[split][1:]
 	}
+	log.Info("Txpool/Add end.")
 	return errs
 }
 
 // Pending retrieves all currently processable transactions, grouped by origin
 // account and sorted by nonce.
 func (p *TxPool) Pending(enforceTips bool) map[common.Address][]*types.Transaction {
+	log.Info("Txpool/Pending.")
 	txs := make(map[common.Address][]*types.Transaction)
 	for _, subpool := range p.subpools {
 		for addr, set := range subpool.Pending(enforceTips) {
@@ -265,6 +270,7 @@ func (p *TxPool) Pending(enforceTips bool) map[common.Address][]*types.Transacti
 // SubscribeNewTxsEvent registers a subscription of NewTxsEvent and starts sending
 // events to the given channel.
 func (p *TxPool) SubscribeNewTxsEvent(ch chan<- core.NewTxsEvent) event.Subscription {
+	log.Info("Txpool/SubscribeNewTxsEvent.")
 	subs := make([]event.Subscription, len(p.subpools))
 	for i, subpool := range p.subpools {
 		subs[i] = subpool.SubscribeTransactions(ch)
@@ -279,6 +285,7 @@ func (p *TxPool) Nonce(addr common.Address) uint64 {
 	// (at max) a non-state nonce. To avoid stateful lookups, just return the
 	// highest nonce for now.
 	var nonce uint64
+	log.Info("Txpool/Nonce.")
 	for _, subpool := range p.subpools {
 		if next := subpool.Nonce(addr); nonce < next {
 			nonce = next
@@ -290,6 +297,7 @@ func (p *TxPool) Nonce(addr common.Address) uint64 {
 // Stats retrieves the current pool stats, namely the number of pending and the
 // number of queued (non-executable) transactions.
 func (p *TxPool) Stats() (int, int) {
+	log.Info("Txpool/Stats.")
 	var runnable, blocked int
 	for _, subpool := range p.subpools {
 		run, block := subpool.Stats()
@@ -307,6 +315,7 @@ func (p *TxPool) Content() (map[common.Address][]*types.Transaction, map[common.
 		runnable = make(map[common.Address][]*types.Transaction)
 		blocked  = make(map[common.Address][]*types.Transaction)
 	)
+	log.Info("Txpool/Content.")
 	for _, subpool := range p.subpools {
 		run, block := subpool.Content()
 
@@ -323,6 +332,7 @@ func (p *TxPool) Content() (map[common.Address][]*types.Transaction, map[common.
 // ContentFrom retrieves the data content of the transaction pool, returning the
 // pending as well as queued transactions of this address, grouped by nonce.
 func (p *TxPool) ContentFrom(addr common.Address) ([]*types.Transaction, []*types.Transaction) {
+	log.Info("Txpool/ContentFrom.")
 	for _, subpool := range p.subpools {
 		run, block := subpool.ContentFrom(addr)
 		if len(run) != 0 || len(block) != 0 {
@@ -335,6 +345,7 @@ func (p *TxPool) ContentFrom(addr common.Address) ([]*types.Transaction, []*type
 // Locals retrieves the accounts currently considered local by the pool.
 func (p *TxPool) Locals() []common.Address {
 	// Retrieve the locals from each subpool and deduplicate them
+	log.Info("Txpool/Locals.")
 	locals := make(map[common.Address]struct{})
 	for _, subpool := range p.subpools {
 		for _, local := range subpool.Locals() {
@@ -352,6 +363,7 @@ func (p *TxPool) Locals() []common.Address {
 // Status returns the known status (unknown/pending/queued) of a transaction
 // identified by their hashes.
 func (p *TxPool) Status(hash common.Hash) TxStatus {
+	log.Info("Txpool/Status.")
 	for _, subpool := range p.subpools {
 		if status := subpool.Status(hash); status != TxStatusUnknown {
 			return status
