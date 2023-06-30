@@ -1033,7 +1033,7 @@ func (pool *LegacyPool) Status(hash common.Hash) txpool.TxStatus {
 
 // Get returns a transaction if it is contained in the pool and nil otherwise.
 func (pool *LegacyPool) Get(hash common.Hash) *txpool.Transaction {
-	log.Info("LegacyPool/Get.")
+	// log.Info("LegacyPool/Get.")
 	tx := pool.get(hash)
 	if tx == nil {
 		return nil
@@ -1043,14 +1043,14 @@ func (pool *LegacyPool) Get(hash common.Hash) *txpool.Transaction {
 
 // get returns a transaction if it is contained in the pool and nil otherwise.
 func (pool *LegacyPool) get(hash common.Hash) *types.Transaction {
-	log.Info("LegacyPool/get.")
+	// log.Info("LegacyPool/get.")
 	return pool.all.Get(hash)
 }
 
 // Has returns an indicator whether txpool has a transaction cached with the
 // given hash.
 func (pool *LegacyPool) Has(hash common.Hash) bool {
-	log.Info("LegacyPool/Has.")
+	// log.Info("LegacyPool/Has.")
 	return pool.all.Get(hash) != nil
 }
 

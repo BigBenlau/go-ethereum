@@ -185,7 +185,7 @@ func (p *TxPool) SetGasTip(tip *big.Int) {
 // Has returns an indicator whether the pool has a transaction cached with the
 // given hash.
 func (p *TxPool) Has(hash common.Hash) bool {
-	log.Info("txpool/Has.")
+	// log.Info("txpool/Has.")
 	for _, subpool := range p.subpools {
 		if subpool.Has(hash) {
 			return true
@@ -196,7 +196,7 @@ func (p *TxPool) Has(hash common.Hash) bool {
 
 // Get returns a transaction if it is contained in the pool, or nil otherwise.
 func (p *TxPool) Get(hash common.Hash) *Transaction {
-	log.Info("txpool/Get.")
+	// log.Info("txpool/Get.")
 	for _, subpool := range p.subpools {
 		if tx := subpool.Get(hash); tx != nil {
 			return tx
