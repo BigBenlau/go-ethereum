@@ -19,6 +19,7 @@ package legacypool
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"math/big"
 	"sort"
@@ -639,7 +640,7 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 	log.Info("LegacyPool/add **.")
 	// If the transaction is already known, discard it
 	hash := tx.Hash()
-	log.Info(hash.Hex())
+	log.Info(fmt.Sprintf("add %v", hash.Hex()))
 	if pool.all.Get(hash) != nil {
 		log.Trace("Discarding already known transaction", "hash", hash)
 		knownTxMeter.Mark(1)
@@ -847,6 +848,7 @@ func (pool *LegacyPool) journalTx(from common.Address, tx *types.Transaction) {
 // Note, this method assumes the pool lock is held!
 func (pool *LegacyPool) promoteTx(addr common.Address, hash common.Hash, tx *types.Transaction) bool {
 	log.Info("LegacyPool/promoteTx.")
+	log.Info(fmt.Sprintf("promoteTx %v", hash.Hex()))
 	// Try to insert the transaction into the pending queue
 	if pool.pending[addr] == nil {
 		pool.pending[addr] = newList(true)
