@@ -1465,6 +1465,7 @@ func (pool *LegacyPool) truncatePending() {
 	pending := uint64(0)
 	for _, list := range pool.pending {
 		pending += uint64(list.Len())
+		log.Info(fmt.Sprintf("pending number %v.", pending))
 	}
 	if pending <= pool.config.GlobalSlots {
 		return
@@ -1479,6 +1480,7 @@ func (pool *LegacyPool) truncatePending() {
 			spammers.Push(addr, int64(list.Len()))
 		}
 	}
+	log.Info(fmt.Sprintf("pending/spammers %v", spammers))
 	// Gradually drop transactions from offenders
 	offenders := []common.Address{}
 	for pending > pool.config.GlobalSlots && !spammers.Empty() {
