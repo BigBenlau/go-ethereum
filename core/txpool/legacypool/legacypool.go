@@ -642,6 +642,7 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 	hash := tx.Hash()
 	log.Info(fmt.Sprintf("add %v", hash.Hex()))
 	if pool.all.Get(hash) != nil {
+		log.Info("Discarding already known transaction", "hash", hash)
 		log.Trace("Discarding already known transaction", "hash", hash)
 		knownTxMeter.Mark(1)
 		return false, ErrAlreadyKnown
@@ -652,6 +653,7 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 
 	// If the transaction fails basic validation, discard it
 	if err := pool.validateTx(tx, isLocal); err != nil {
+		log.Info("Discarding invalid transaction", "hash", hash, "err", err)
 		log.Trace("Discarding invalid transaction", "hash", hash, "err", err)
 		invalidTxMeter.Mark(1)
 		return false, err
@@ -663,7 +665,9 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 	// If the transaction pool is full, discard underpriced transactions
 	if uint64(pool.all.Slots()+numSlots(tx)) > pool.config.GlobalSlots+pool.config.GlobalQueue {
 		// If the new transaction is underpriced, don't accept it
+		log.Info("Pool is Full.", "hash", hash)
 		if !isLocal && pool.priced.Underpriced(tx) {
+			log.Info("Tx underprice.", "hash", hash)
 			log.Trace("Discarding underpriced transaction", "hash", hash, "gasTipCap", tx.GasTipCap(), "gasFeeCap", tx.GasFeeCap())
 			underpricedTxMeter.Mark(1)
 			return false, txpool.ErrUnderpriced
@@ -674,6 +678,7 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 		// do too many replacements between reorg-runs, so we cap the number of
 		// replacements to 25% of the slots
 		if pool.changesSinceReorg > int(pool.config.GlobalSlots/4) {
+			log.Info("Since Reorg drop too much.")
 			throttleTxMeter.Mark(1)
 			return false, ErrTxPoolOverflow
 		}
@@ -685,6 +690,7 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 
 		// Special case, we still can't make the room for the new remote one.
 		if !isLocal && !success {
+			log.Info("Discarding overflown transaction", "hash", hash)
 			log.Trace("Discarding overflown transaction", "hash", hash)
 			overflowedTxMeter.Mark(1)
 			return false, ErrTxPoolOverflow
@@ -694,6 +700,7 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 		if !isLocal && pool.isGapped(from, tx) {
 			var replacesPending bool
 			for _, dropTx := range drop {
+				log.Info("Output dropTx", dropTx.Hash())
 				dropSender, _ := types.Sender(pool.signer, dropTx)
 				if list := pool.pending[dropSender]; list != nil && list.Contains(dropTx.Nonce()) {
 					replacesPending = true
@@ -712,15 +719,18 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 
 		// Kick out the underpriced remote transactions.
 		for _, tx := range drop {
+			log.Info("Discarding freshly underpriced transaction", "hash", tx.Hash(), "gasTipCap", tx.GasTipCap(), "gasFeeCap", tx.GasFeeCap())
 			log.Trace("Discarding freshly underpriced transaction", "hash", tx.Hash(), "gasTipCap", tx.GasTipCap(), "gasFeeCap", tx.GasFeeCap())
 			underpricedTxMeter.Mark(1)
 			dropped := pool.removeTx(tx.Hash(), false)
+			log.Info("Dropped number: ", dropped)
 			pool.changesSinceReorg += dropped
 		}
 	}
 
 	// Try to replace an existing transaction in the pending pool
 	if list := pool.pending[from]; list != nil && list.Contains(tx.Nonce()) {
+		log.Info("Replace existing transactions!!", "hash", hash)
 		// Nonce already pending, check if required price bump is met
 		inserted, old := list.Add(tx, pool.config.PriceBump)
 		if !inserted {
@@ -759,13 +769,14 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 	}
 	pool.journalTx(from, tx)
 
+	log.Info("Pooled new future transaction", "hash", hash, "from", from, "to", tx.To())
 	log.Trace("Pooled new future transaction", "hash", hash, "from", from, "to", tx.To())
 	return replaced, nil
 }
 
 // isGapped reports whether the given transaction is immediately executable.
 func (pool *LegacyPool) isGapped(from common.Address, tx *types.Transaction) bool {
-	log.Info("LegacyPool/isGapped.")
+	log.Info("LegacyPool/isGapped.", tx.Hash())
 	// Short circuit if transaction falls within the scope of the pending list
 	// or matches the next pending nonce which can be promoted as an executable
 	// transaction afterwards. Note, the tx staleness is already checked in
@@ -1465,7 +1476,7 @@ func (pool *LegacyPool) truncatePending() {
 	pending := uint64(0)
 	for _, list := range pool.pending {
 		pending += uint64(list.Len())
-		log.Info(fmt.Sprintf("pending number %v.", pending))
+		// log.Info(fmt.Sprintf("pending number %v.", pending))
 	}
 	if pending <= pool.config.GlobalSlots {
 		return
