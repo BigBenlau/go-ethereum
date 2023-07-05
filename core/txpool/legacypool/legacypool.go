@@ -773,7 +773,7 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 	for _, list := range pool.pending {
 		pending_num += uint64(list.Len())
 	}
-	log.Info("Pending Len", "pending", pending_num)
+	log.Info(fmt.Sprintf("Pending Len: %v", pending_num))
 	for addr, txs := range pool.pending {
 		log.Info("Pending pool", "addr", addr, "txs", txs)
 	}
@@ -782,7 +782,7 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 	for _, list := range pool.queue {
 		queued_num += uint64(list.Len())
 	}
-	log.Info("Queue Len", "queued", queued_num)
+	log.Info(fmt.Sprintf("Queued Len: %v", queued_num))
 	for addr, txs := range pool.queue {
 		log.Info("Pending pool", "addr", addr, "txs", txs)
 	}
