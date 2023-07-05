@@ -769,6 +769,15 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 	}
 	pool.journalTx(from, tx)
 
+	log.Info("Pending Len", len(pool.pending))
+	for addr, txs := range pool.pending {
+		log.Info("Pending pool", "addr", addr, "txs", txs)
+	}
+	log.Info("Queue Len", len(pool.queue))
+	for addr, txs := range pool.queue {
+		log.Info("Queue pool", "addr", addr, "txs", txs)
+	}
+
 	log.Info("Pooled new future transaction", "hash", hash, "from", from, "to", tx.To())
 	log.Trace("Pooled new future transaction", "hash", hash, "from", from, "to", tx.To())
 	return replaced, nil
@@ -1491,7 +1500,7 @@ func (pool *LegacyPool) truncatePending() {
 			spammers.Push(addr, int64(list.Len()))
 		}
 	}
-	log.Info(fmt.Sprintf("pending/spammers %v", spammers))
+
 	// Gradually drop transactions from offenders
 	offenders := []common.Address{}
 	for pending > pool.config.GlobalSlots && !spammers.Empty() {
