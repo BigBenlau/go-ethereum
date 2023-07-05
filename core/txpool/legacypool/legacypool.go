@@ -769,20 +769,20 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 	}
 	pool.journalTx(from, tx)
 
-	pending := uint64(0)
+	pending_num := uint64(0)
 	for _, list := range pool.pending {
-		pending += uint64(list.Len())
+		pending_num += uint64(list.Len())
 	}
-	log.Info("Pending Len", pending)
+	log.Info("Pending Len", "pending", pending_num)
 	for addr, txs := range pool.pending {
 		log.Info("Pending pool", "addr", addr, "txs", txs)
 	}
 
-	queued := uint64(0)
+	queued_num := uint64(0)
 	for _, list := range pool.queue {
-		queued += uint64(list.Len())
+		queued_num += uint64(list.Len())
 	}
-	log.Info("Queue Len", queued)
+	log.Info("Queue Len", "queued", queued_num)
 	for addr, txs := range pool.queue {
 		log.Info("Pending pool", "addr", addr, "txs", txs)
 	}
