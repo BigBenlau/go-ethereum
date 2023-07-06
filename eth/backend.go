@@ -132,7 +132,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := pruner.RecoverPruning(stack.ResolvePath(""), chainDb, stack.ResolvePath(config.TrieCleanCacheJournal)); err != nil {
+	if err := pruner.RecoverPruning(stack.ResolvePath(""), chainDb); err != nil {
 		log.Error("Failed to recover state", "error", err)
 	}
 	// Transfer mining-related config to the ethash config.
@@ -184,8 +184,6 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		}
 		cacheConfig = &core.CacheConfig{
 			TrieCleanLimit:      config.TrieCleanCache,
-			TrieCleanJournal:    stack.ResolvePath(config.TrieCleanCacheJournal),
-			TrieCleanRejournal:  config.TrieCleanCacheRejournal,
 			TrieCleanNoPrefetch: config.NoPrefetch,
 			TrieDirtyLimit:      config.TrieDirtyCache,
 			TrieDirtyDisabled:   config.NoPruning,
@@ -198,6 +196,9 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	var overrides core.ChainOverrides
 	if config.OverrideCancun != nil {
 		overrides.OverrideCancun = config.OverrideCancun
+	}
+	if config.OverrideVerkle != nil {
+		overrides.OverrideVerkle = config.OverrideVerkle
 	}
 	eth.blockchain, err = core.NewBlockChain(chainDb, cacheConfig, config.Genesis, &overrides, eth.engine, vmConfig, eth.shouldPreserve, &config.TxLookupLimit)
 	if err != nil {

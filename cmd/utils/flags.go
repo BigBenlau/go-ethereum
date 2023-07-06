@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -159,7 +160,7 @@ var (
 		Usage:    "Ephemeral proof-of-authority network with a pre-funded developer account, mining enabled",
 		Category: flags.DevCategory,
 	}
-	DeveloperPeriodFlag = &cli.IntFlag{
+	DeveloperPeriodFlag = &cli.Uint64Flag{
 		Name:     "dev.period",
 		Usage:    "Block period to use in developer mode (0 = mine only if transaction pending)",
 		Category: flags.DevCategory,
@@ -266,6 +267,11 @@ var (
 	OverrideCancun = &cli.Uint64Flag{
 		Name:     "override.cancun",
 		Usage:    "Manually specify the Cancun fork timestamp, overriding the bundled setting",
+		Category: flags.EthCategory,
+	}
+	OverrideVerkle = &cli.Uint64Flag{
+		Name:     "override.verkle",
+		Usage:    "Manually specify the Verkle fork timestamp, overriding the bundled setting",
 		Category: flags.EthCategory,
 	}
 	// Light server and client settings
@@ -402,18 +408,6 @@ var (
 		Name:     "cache.trie",
 		Usage:    "Percentage of cache memory allowance to use for trie caching (default = 15% full mode, 30% archive mode)",
 		Value:    15,
-		Category: flags.PerfCategory,
-	}
-	CacheTrieJournalFlag = &cli.StringFlag{
-		Name:     "cache.trie.journal",
-		Usage:    "Disk journal directory for trie cache to survive node restarts",
-		Value:    ethconfig.Defaults.TrieCleanCacheJournal,
-		Category: flags.PerfCategory,
-	}
-	CacheTrieRejournalFlag = &cli.DurationFlag{
-		Name:     "cache.trie.rejournal",
-		Usage:    "Time interval to regenerate the trie cache journal",
-		Value:    ethconfig.Defaults.TrieCleanCacheRejournal,
 		Category: flags.PerfCategory,
 	}
 	CacheGCFlag = &cli.IntFlag{
@@ -1704,12 +1698,6 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 	if ctx.IsSet(CacheFlag.Name) || ctx.IsSet(CacheTrieFlag.Name) {
 		cfg.TrieCleanCache = ctx.Int(CacheFlag.Name) * ctx.Int(CacheTrieFlag.Name) / 100
 	}
-	if ctx.IsSet(CacheTrieJournalFlag.Name) {
-		cfg.TrieCleanCacheJournal = ctx.String(CacheTrieJournalFlag.Name)
-	}
-	if ctx.IsSet(CacheTrieRejournalFlag.Name) {
-		cfg.TrieCleanCacheRejournal = ctx.Duration(CacheTrieRejournalFlag.Name)
-	}
 	if ctx.IsSet(CacheFlag.Name) || ctx.IsSet(CacheGCFlag.Name) {
 		cfg.TrieDirtyCache = ctx.Int(CacheFlag.Name) * ctx.Int(CacheGCFlag.Name) / 100
 	}
@@ -1829,7 +1817,7 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 		log.Info("Using developer account", "address", developer.Address)
 
 		// Create a new developer genesis block or reuse existing one
-		cfg.Genesis = core.DeveloperGenesisBlock(uint64(ctx.Int(DeveloperPeriodFlag.Name)), ctx.Uint64(DeveloperGasLimitFlag.Name), developer.Address)
+		cfg.Genesis = core.DeveloperGenesisBlock(ctx.Uint64(DeveloperGasLimitFlag.Name), developer.Address)
 		if ctx.IsSet(DataDirFlag.Name) {
 			// If datadir doesn't exist we need to open db in write-mode
 			// so leveldb can create files.
@@ -1903,9 +1891,6 @@ func RegisterEthService(stack *node.Node, cfg *ethconfig.Config) (ethapi.Backend
 		if err != nil {
 			Fatalf("Failed to create the LES server: %v", err)
 		}
-	}
-	if err := ethcatalyst.Register(stack, backend); err != nil {
-		Fatalf("Failed to register the Engine API service: %v", err)
 	}
 	stack.RegisterAPIs(tracers.APIs(backend.APIBackend))
 	return backend.APIBackend, backend
@@ -2009,7 +1994,7 @@ func SetupMetrics(ctx *cli.Context) {
 		}
 
 		if ctx.IsSet(MetricsHTTPFlag.Name) {
-			address := fmt.Sprintf("%s:%d", ctx.String(MetricsHTTPFlag.Name), ctx.Int(MetricsPortFlag.Name))
+			address := net.JoinHostPort(ctx.String(MetricsHTTPFlag.Name), fmt.Sprintf("%d", ctx.Int(MetricsPortFlag.Name)))
 			log.Info("Enabling stand-alone metrics HTTP endpoint", "address", address)
 			exp.Setup(address)
 		} else if ctx.IsSet(MetricsPortFlag.Name) {
