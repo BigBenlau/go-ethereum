@@ -784,7 +784,7 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 	}
 	log.Info(fmt.Sprintf("Queued Len: %v", queued_num))
 	for addr, txs := range pool.queue {
-		log.Info("Pending pool", "addr", addr, "txs", txs)
+		log.Info("Queued pool", "addr", addr, "txs", txs)
 	}
 
 	log.Info("Pooled new future transaction", "hash", hash, "from", from, "to", tx.To())
