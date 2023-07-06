@@ -138,10 +138,12 @@ func (p *TxPool) loop(head *types.Header, chain BlockChain) {
 		// one needed but none is running. The resetter will run on its own
 		// goroutine to allow chain head events to be consumed contiguously.
 		if newHead != oldHead {
+			log.Info("txpool/loop New Head != Old Head")
 			// Try to inject a busy marker and start a reset if successful
 			select {
 			case resetBusy <- struct{}{}:
 				// Busy marker injected, start a new subpool reset
+				log.Info("txpool/loop Reset Start.")
 				go func(oldHead, newHead *types.Header) {
 					for _, subpool := range p.subpools {
 						subpool.Reset(oldHead, newHead)
@@ -158,11 +160,13 @@ func (p *TxPool) loop(head *types.Header, chain BlockChain) {
 		case event := <-newHeadCh:
 			// Chain moved forward, store the head for later consumption
 			newHead = event.Block.Header()
+			log.Info("txpool/loop New Block Arrived.")
 
 		case head := <-resetDone:
 			// Previous reset finished, update the old head and allow a new reset
 			oldHead = head
 			<-resetBusy
+			log.Info("txpool/loop Reset Done.")
 
 		case errc = <-p.quit:
 			// Termination requested, break out on the next loop round
