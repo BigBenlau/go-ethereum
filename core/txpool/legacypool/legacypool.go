@@ -282,7 +282,7 @@ func New(config Config, chain BlockChain) *LegacyPool {
 // Filter returns whether the given transaction can be consumed by the legacy
 // pool, specifically, whether it is a Legacy, AccessList or Dynamic transaction.
 func (pool *LegacyPool) Filter(tx *types.Transaction) bool {
-	// log.Info("legacypool/filter.")
+	log.Info("legacypool/filter.")
 	switch tx.Type() {
 	case types.LegacyTxType, types.AccessListTxType, types.DynamicFeeTxType:
 		return true
@@ -580,7 +580,7 @@ func (pool *LegacyPool) local() map[common.Address]types.Transactions {
 // This check is meant as an early check which only needs to be performed once,
 // and does not require the pool mutex to be held.
 func (pool *LegacyPool) validateTxBasics(tx *types.Transaction, local bool) error {
-	log.Info("LegacyPool/validateTxBasics.")
+	// log.Info("LegacyPool/validateTxBasics.")
 	opts := &txpool.ValidationOptions{
 		Config: pool.chainconfig,
 		Accept: 0 |
@@ -772,20 +772,20 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 	}
 	pool.journalTx(from, tx)
 
-	// pending_num := uint64(0)
-	// for _, list := range pool.pending {
-	// 	pending_num += uint64(list.Len())
-	// }
-	// log.Info(fmt.Sprintf("Pending Len: %v", pending_num))
+	pending_num := uint64(0)
+	for _, list := range pool.pending {
+		pending_num += uint64(list.Len())
+	}
+	log.Info(fmt.Sprintf("Pending Len: %v", pending_num))
 	// for addr, txs := range pool.pending {
 	// 	log.Info("Pending pool", "addr", addr, "txs", txs)
 	// }
 
-	// queued_num := uint64(0)
-	// for _, list := range pool.queue {
-	// 	queued_num += uint64(list.Len())
-	// }
-	// log.Info(fmt.Sprintf("Queued Len: %v", queued_num))
+	queued_num := uint64(0)
+	for _, list := range pool.queue {
+		queued_num += uint64(list.Len())
+	}
+	log.Info(fmt.Sprintf("Queued Len: %v", queued_num))
 	// for addr, txs := range pool.queue {
 	// 	log.Info("Queued pool", "addr", addr, "txs", txs)
 	// }
@@ -797,7 +797,7 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 
 // isGapped reports whether the given transaction is immediately executable.
 func (pool *LegacyPool) isGapped(from common.Address, tx *types.Transaction) bool {
-	log.Info("LegacyPool/isGapped.", tx.Hash())
+	log.Info(fmt.Sprintf("LegacyPool/isGapped. hash=%v", tx.Hash()))
 	// Short circuit if transaction falls within the scope of the pending list
 	// or matches the next pending nonce which can be promoted as an executable
 	// transaction afterwards. Note, the tx staleness is already checked in
@@ -1018,6 +1018,12 @@ func (pool *LegacyPool) addTxs(txs []*types.Transaction, local, sync bool) []err
 		nilSlot++
 	}
 	// Reorg the pool internals if needed and return
+
+	log.Info("legacypool/AddTxs Start Print Dirty Addrs.")
+	log.Info("Dirty Addr:", "accounts", dirtyAddrs.accounts, "signer", dirtyAddrs.signer)
+
+	log.Info("legacypool/AddTxs addTxsLocked Finish! Start requestPromoteExecutables.")
+
 	done := pool.requestPromoteExecutables(dirtyAddrs)
 	if sync {
 		<-done
@@ -1210,6 +1216,7 @@ func (pool *LegacyPool) scheduleReorgLoop() {
 				reset.newHead = req.newHead
 			}
 			launchNextRun = true
+			log.Info("legacypool/scheduleReorgLoop Receive new Head.")
 			pool.reorgDoneCh <- nextDone
 
 		case req := <-pool.reqPromoteCh:
@@ -1220,6 +1227,8 @@ func (pool *LegacyPool) scheduleReorgLoop() {
 				dirtyAccounts.merge(req)
 			}
 			launchNextRun = true
+
+			log.Info("legacypool/scheduleReorgLoop Receive new Promote Request.")
 			pool.reorgDoneCh <- nextDone
 
 		case tx := <-pool.queueTxEventCh:
