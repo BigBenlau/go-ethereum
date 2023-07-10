@@ -664,6 +664,7 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 	// If the transaction pool is full, discard underpriced transactions
 	if uint64(pool.all.Slots()+numSlots(tx)) > pool.config.GlobalSlots+pool.config.GlobalQueue {
 		// If the new transaction is underpriced, don't accept it
+		log.Info(fmt.Sprintf("All slots:%v, numSlots:%v, GlobalSlots+GlobalQueue:%v", pool.all.Slots(), numSlots(tx), pool.config.GlobalSlots+pool.config.GlobalQueue))
 		log.Info("LegacyPool/add Pool is Full.", "hash", hash)
 		if !isLocal && pool.priced.Underpriced(tx) {
 			log.Info("LegacyPool/add Tx underprice.", "hash", hash)
