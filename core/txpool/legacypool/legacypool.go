@@ -874,15 +874,8 @@ func (pool *LegacyPool) promoteTx(addr common.Address, hash common.Hash, tx *typ
 		pool.pending[addr] = newList(true)
 	}
 	list := pool.pending[addr]
-	pending_num, queued_num := pool.stats()
-	log.Info(fmt.Sprintf("LegacyPool/promoteTx Pending Len: %v", pending_num))
-	log.Info(fmt.Sprintf("LegacyPool/promoteTx Queued Len: %v", queued_num))
 
 	inserted, old := list.Add(tx, pool.config.PriceBump)
-
-	// pending_num, queued_num = pool.stats()
-	// log.Info(fmt.Sprintf("LegacyPool/promoteTx Pending Len: %v", pending_num))
-	// log.Info(fmt.Sprintf("LegacyPool/promoteTx Queued Len: %v", queued_num))
 
 	if !inserted {
 		// An older transaction was better, discard this
@@ -906,7 +899,7 @@ func (pool *LegacyPool) promoteTx(addr common.Address, hash common.Hash, tx *typ
 
 	// Successful promotion, bump the heartbeat
 	pool.beats[addr] = time.Now()
-	pending_num, queued_num = pool.stats()
+	pending_num, queued_num := pool.stats()
 	log.Info(fmt.Sprintf("LegacyPool/promoteTx Pending Len: %v", pending_num))
 	log.Info(fmt.Sprintf("LegacyPool/promoteTx Queued Len: %v", queued_num))
 	return true
@@ -1446,19 +1439,23 @@ func (pool *LegacyPool) promoteExecutables(accounts []common.Address) []*types.T
 	// Iterate over all accounts and promote any executable transactions
 	gasLimit := pool.currentHead.Load().GasLimit
 	for _, addr := range accounts {
-		log.Info(fmt.Sprintf("Legacy/promoteExecutables Start a new sender address: %v", addr))
 
 		list := pool.queue[addr]
 		if list == nil {
 			continue // Just in case someone calls with a non existing account
 		}
+
+		log.Info(fmt.Sprintf("Legacy/promoteExecutables Start a new sender address: %v", addr))
+
 		// Drop all transactions that are deemed too old (low nonce)
 		forwards := list.Forward(pool.currentState.GetNonce(addr))
 		for _, tx := range forwards {
 			hash := tx.Hash()
 			pool.all.Remove(hash)
 		}
-		log.Info("LegacyPool/promoteExecutables Removed old queued transactions", "count", len(forwards))
+		if len(forwards) > 0 {
+			log.Info("LegacyPool/promoteExecutables Removed old queued transactions", "count", len(forwards))
+		}
 		log.Trace("Removed old queued transactions", "count", len(forwards))
 		// Drop all transactions that are too costly (low balance or out of gas)
 		drops, _ := list.Filter(pool.currentState.GetBalance(addr), gasLimit)
@@ -1466,7 +1463,9 @@ func (pool *LegacyPool) promoteExecutables(accounts []common.Address) []*types.T
 			hash := tx.Hash()
 			pool.all.Remove(hash)
 		}
-		log.Info("LegacyPool/promoteExecutables Removed unpayable queued transactions", "count", len(drops))
+		if len(drops) > 0 {
+			log.Info("LegacyPool/promoteExecutables Removed unpayable queued transactions", "count", len(drops))
+		}
 		log.Trace("Removed unpayable queued transactions", "count", len(drops))
 		queuedNofundsMeter.Mark(int64(len(drops)))
 
@@ -1521,6 +1520,7 @@ func (pool *LegacyPool) truncatePending() {
 		log.Info("LegacyPool/truncatePending no need to truncate pending")
 		return
 	}
+	log.Info("LegacyPool/truncatePending have to truncate pending, delete some tx.")
 
 	pendingBeforeCap := pending
 	// Assemble a spam order to penalize large transactors first
@@ -1607,8 +1607,11 @@ func (pool *LegacyPool) truncateQueue() {
 		queued += uint64(list.Len())
 	}
 	if queued <= pool.config.GlobalQueue {
+		log.Info("LegacyPool/truncateQueue no need to truncate queue")
 		return
 	}
+
+	log.Info("LegacyPool/truncateQueue queue need to drop some tx.")
 
 	// Sort all accounts with queued transactions by heartbeat
 	addresses := make(addressesByHeartbeat, 0, len(pool.queue))
