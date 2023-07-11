@@ -351,6 +351,7 @@ func (pool *LegacyPool) loop() {
 
 		// Handle stats reporting ticks
 		case <-report.C:
+			log.Info("LegacyPool/loop start report.C")
 			pool.mu.RLock()
 			pending, queued := pool.stats()
 			pool.mu.RUnlock()
@@ -364,6 +365,7 @@ func (pool *LegacyPool) loop() {
 		// Handle inactive account transaction eviction
 		case <-evict.C:
 			pool.mu.Lock()
+			log.Info("LegacyPool/loop start evict.C")
 			for addr := range pool.queue {
 				// Skip local transactions from the eviction mechanism
 				if pool.locals.contains(addr) {
@@ -703,7 +705,7 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 				dropSender, _ := types.Sender(pool.signer, dropTx)
 				if list := pool.pending[dropSender]; list != nil && list.Contains(dropTx.Nonce()) {
 					replacesPending = true
-					log.Info("LegacyPool/add ReplacesPending dropTx", dropTx.Hash())
+					log.Info(fmt.Sprintf("LegacyPool/add ReplacesPending dropTx: %v", dropTx.Hash()))
 					break
 				}
 			}
@@ -977,12 +979,13 @@ func (pool *LegacyPool) addRemoteSync(tx *types.Transaction) error {
 
 // addTxs attempts to queue a batch of transactions if they are valid.
 func (pool *LegacyPool) addTxs(txs []*types.Transaction, local, sync bool) []error {
-	log.Info("LegacyPool/AddTxs.")
+	log.Info("LegacyPool/addTxs.")
 	// Filter out known ones without obtaining the pool lock or recovering signatures
 	var (
 		errs = make([]error, len(txs))
 		news = make([]*types.Transaction, 0, len(txs))
 	)
+	log.Info(fmt.Sprintf("Legacypool/addTxs transaction number is %v", len(txs)))
 	for i, tx := range txs {
 		// If the transaction is known, pre-set the error slot
 		if pool.all.Get(tx.Hash()) != nil {
@@ -1002,6 +1005,7 @@ func (pool *LegacyPool) addTxs(txs []*types.Transaction, local, sync bool) []err
 		news = append(news, tx)
 	}
 	if len(news) == 0 {
+		log.Info("Legacypool/addTxs news is 0.")
 		return errs
 	}
 
@@ -1097,7 +1101,7 @@ func (pool *LegacyPool) Has(hash common.Hash) bool {
 // transactions back to the future queue.
 // Returns the number of transactions removed from the pending queue.
 func (pool *LegacyPool) removeTx(hash common.Hash, outofbound bool) int {
-	log.Info("LegacyPool/removeTx.")
+	log.Info("LegacyPool/removeTx.", "hash", hash)
 	// Fetch the transaction we wish to delete
 	tx := pool.all.Get(hash)
 	if tx == nil {
@@ -1116,6 +1120,7 @@ func (pool *LegacyPool) removeTx(hash common.Hash, outofbound bool) int {
 	// Remove the transaction from the pending lists and reset the account nonce
 	if pending := pool.pending[addr]; pending != nil {
 		if removed, invalids := pending.Remove(tx); removed {
+			log.Info(fmt.Sprintf("LegacyPool/removeTx Remove Pending Transaction: %v", hash))
 			// If no more pending transactions are left, remove the list
 			if pending.Empty() {
 				delete(pool.pending, addr)
@@ -1123,6 +1128,7 @@ func (pool *LegacyPool) removeTx(hash common.Hash, outofbound bool) int {
 			// Postpone any invalidated transactions
 			for _, tx := range invalids {
 				// Internal shuffle shouldn't touch the lookup set.
+				log.Info(fmt.Sprintf("LegacyPool/removeTx Tx back to Queue: %v", hash))
 				pool.enqueueTx(tx.Hash(), tx, false, false)
 			}
 			// Update the account nonce if needed
@@ -1135,6 +1141,7 @@ func (pool *LegacyPool) removeTx(hash common.Hash, outofbound bool) int {
 	// Transaction is in the future queue
 	if future := pool.queue[addr]; future != nil {
 		if removed, _ := future.Remove(tx); removed {
+			log.Info(fmt.Sprintf("LegacyPool/removeTx Remove Queue Transaction: %v", hash))
 			// Reduce the queued counter
 			queuedGauge.Dec(1)
 		}
@@ -1510,6 +1517,7 @@ func (pool *LegacyPool) truncatePending() {
 		// log.Info(fmt.Sprintf("pending number %v.", pending))
 	}
 	if pending <= pool.config.GlobalSlots {
+		log.Info("LegacyPool/truncatePending no need to truncate pending")
 		return
 	}
 
@@ -1548,6 +1556,7 @@ func (pool *LegacyPool) truncatePending() {
 
 						// Update the account nonce to the dropped transaction
 						pool.pendingNonces.setIfLower(offenders[i], tx.Nonce())
+						log.Info(fmt.Sprintf("LegacyPool/truncatePending remove pending hash: %v", hash))
 						log.Trace("Removed fairness-exceeding pending transaction", "hash", hash)
 					}
 					pool.priced.Removed(len(caps))

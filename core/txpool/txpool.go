@@ -138,7 +138,7 @@ func (p *TxPool) loop(head *types.Header, chain BlockChain) {
 		// one needed but none is running. The resetter will run on its own
 		// goroutine to allow chain head events to be consumed contiguously.
 		if newHead != oldHead {
-			log.Info("txpool/loop New Head != Old Head")
+			log.Info("txpool/loop New Head != Old Head.")
 			// Try to inject a busy marker and start a reset if successful
 			select {
 			case resetBusy <- struct{}{}:
