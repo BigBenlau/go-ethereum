@@ -1585,6 +1585,7 @@ func (pool *LegacyPool) truncatePending() {
 
 					// Update the account nonce to the dropped transaction
 					pool.pendingNonces.setIfLower(addr, tx.Nonce())
+					log.Info(fmt.Sprintf("LegacyPool/truncatePending Removed fairness-exceeding pending transaction: %v", hash))
 					log.Trace("Removed fairness-exceeding pending transaction", "hash", hash)
 				}
 				pool.priced.Removed(len(caps))
@@ -1664,6 +1665,7 @@ func (pool *LegacyPool) demoteUnexecutables() {
 
 		// Drop all transactions that are deemed too old (low nonce)
 		olds := list.Forward(nonce)
+		log.Info(fmt.Sprintf("LegacyPool/demoteUnexecutables the number of Removed old pending transactions: %v", len(olds)))
 		for _, tx := range olds {
 			hash := tx.Hash()
 			pool.all.Remove(hash)
