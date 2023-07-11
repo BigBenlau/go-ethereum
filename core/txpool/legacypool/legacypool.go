@@ -1665,7 +1665,9 @@ func (pool *LegacyPool) demoteUnexecutables() {
 
 		// Drop all transactions that are deemed too old (low nonce)
 		olds := list.Forward(nonce)
-		log.Info(fmt.Sprintf("LegacyPool/demoteUnexecutables the number of Removed old pending transactions: %v", len(olds)))
+		if len(olds) > 0 {
+			log.Info(fmt.Sprintf("LegacyPool/demoteUnexecutables address: %v the number of Removed old pending transactions: %v", addr, len(olds)))
+		}
 		for _, tx := range olds {
 			hash := tx.Hash()
 			pool.all.Remove(hash)
