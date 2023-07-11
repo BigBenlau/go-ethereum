@@ -1667,12 +1667,14 @@ func (pool *LegacyPool) demoteUnexecutables() {
 		for _, tx := range olds {
 			hash := tx.Hash()
 			pool.all.Remove(hash)
+			log.Info("LegacyPool/demoteUnexecutables Removed old pending transaction", "hash", hash)
 			log.Trace("Removed old pending transaction", "hash", hash)
 		}
 		// Drop all transactions that are too costly (low balance or out of gas), and queue any invalids back for later
 		drops, invalids := list.Filter(pool.currentState.GetBalance(addr), gasLimit)
 		for _, tx := range drops {
 			hash := tx.Hash()
+			log.Info("LegacyPool/demoteUnexecutables Removed unpayable pending transaction", "hash", hash)
 			log.Trace("Removed unpayable pending transaction", "hash", hash)
 			pool.all.Remove(hash)
 		}
@@ -1680,6 +1682,7 @@ func (pool *LegacyPool) demoteUnexecutables() {
 
 		for _, tx := range invalids {
 			hash := tx.Hash()
+			log.Info("LegacyPool/demoteUnexecutables Demoting pending transaction", "hash", hash)
 			log.Trace("Demoting pending transaction", "hash", hash)
 
 			// Internal shuffle shouldn't touch the lookup set.
