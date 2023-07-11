@@ -874,8 +874,16 @@ func (pool *LegacyPool) promoteTx(addr common.Address, hash common.Hash, tx *typ
 		pool.pending[addr] = newList(true)
 	}
 	list := pool.pending[addr]
+	pending_num, queued_num := pool.stats()
+	log.Info(fmt.Sprintf("LegacyPool/promoteTx Pending Len: %v", pending_num))
+	log.Info(fmt.Sprintf("LegacyPool/promoteTx Queued Len: %v", queued_num))
 
 	inserted, old := list.Add(tx, pool.config.PriceBump)
+
+	pending_num, queued_num = pool.stats()
+	log.Info(fmt.Sprintf("LegacyPool/promoteTx Pending Len: %v", pending_num))
+	log.Info(fmt.Sprintf("LegacyPool/promoteTx Queued Len: %v", queued_num))
+
 	if !inserted {
 		// An older transaction was better, discard this
 		pool.all.Remove(hash)
@@ -898,7 +906,7 @@ func (pool *LegacyPool) promoteTx(addr common.Address, hash common.Hash, tx *typ
 
 	// Successful promotion, bump the heartbeat
 	pool.beats[addr] = time.Now()
-	pending_num, queued_num := pool.stats()
+	pending_num, queued_num = pool.stats()
 	log.Info(fmt.Sprintf("LegacyPool/promoteTx Pending Len: %v", pending_num))
 	log.Info(fmt.Sprintf("LegacyPool/promoteTx Queued Len: %v", queued_num))
 	return true
