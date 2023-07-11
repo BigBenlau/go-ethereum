@@ -775,25 +775,10 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 	}
 	pool.journalTx(from, tx)
 
-	pending_num := uint64(0)
-	for _, list := range pool.pending {
-		pending_num += uint64(list.Len())
-	}
-	log.Info(fmt.Sprintf("Pending Len: %v", pending_num))
-	// for addr, txs := range pool.pending {
-	// 	log.Info("Pending pool", "addr", addr, "txs", txs)
-	// }
+	pending_num, queued_num := pool.stats()
+	log.Info(fmt.Sprintf("LegacyPool/add Pending Len: %v", pending_num))
+	log.Info(fmt.Sprintf("LegacyPool/add Queued Len: %v", queued_num))
 
-	queued_num := uint64(0)
-	for _, list := range pool.queue {
-		queued_num += uint64(list.Len())
-	}
-	log.Info(fmt.Sprintf("Queued Len: %v", queued_num))
-	// for addr, txs := range pool.queue {
-	// 	log.Info("Queued pool", "addr", addr, "txs", txs)
-	// }
-
-	// log.Info("Pooled new future transaction", "hash", hash, "from", from, "to", tx.To())
 	log.Trace("LegacyPool/add Pooled new future transaction", "hash", hash, "from", from, "to", tx.To())
 	return replaced, nil
 }
@@ -896,6 +881,7 @@ func (pool *LegacyPool) promoteTx(addr common.Address, hash common.Hash, tx *typ
 		pool.all.Remove(hash)
 		pool.priced.Removed(1)
 		pendingDiscardMeter.Mark(1)
+		log.Info("")
 		return false
 	}
 	// Otherwise discard any previous transaction and mark this
@@ -912,6 +898,9 @@ func (pool *LegacyPool) promoteTx(addr common.Address, hash common.Hash, tx *typ
 
 	// Successful promotion, bump the heartbeat
 	pool.beats[addr] = time.Now()
+	pending_num, queued_num := pool.stats()
+	log.Info(fmt.Sprintf("LegacyPool/promoteTx Pending Len: %v", pending_num))
+	log.Info(fmt.Sprintf("LegacyPool/promoteTx Queued Len: %v", queued_num))
 	return true
 }
 
