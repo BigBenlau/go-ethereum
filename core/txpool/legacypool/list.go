@@ -18,6 +18,7 @@ package legacypool
 
 import (
 	"container/heap"
+	"fmt"
 	"math"
 	"math/big"
 	"sort"
@@ -27,6 +28,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/log"
 )
 
 // nonceHeap is a heap.Interface implementation over 64bit unsigned integers for
@@ -97,6 +99,9 @@ func (m *sortedMap) Forward(threshold uint64) types.Transactions {
 	if m.cache != nil {
 		m.cache = m.cache[len(removed):]
 	}
+	for _, tx := range removed {
+		log.Info(fmt.Sprintf("List/Forward remove tx: %v", tx.Hash()))
+	}
 	return removed
 }
 
@@ -138,6 +143,11 @@ func (m *sortedMap) filter(filter func(*types.Transaction) bool) types.Transacti
 	if len(removed) > 0 {
 		m.cache = nil
 	}
+
+	for _, tx := range removed {
+		log.Info(fmt.Sprintf("List/filter remove tx: %v", tx.Hash()))
+	}
+
 	return removed
 }
 
@@ -163,6 +173,11 @@ func (m *sortedMap) Cap(threshold int) types.Transactions {
 	if m.cache != nil {
 		m.cache = m.cache[:len(m.cache)-len(drops)]
 	}
+
+	for _, tx := range drops {
+		log.Info(fmt.Sprintf("List/Cap remove tx: %v", tx.Hash()))
+	}
+
 	return drops
 }
 
@@ -181,6 +196,9 @@ func (m *sortedMap) Remove(nonce uint64) bool {
 			break
 		}
 	}
+
+	log.Info(fmt.Sprintf("List/Remove remove tx: %v", m.items[nonce].Hash()))
+
 	delete(m.items, nonce)
 	m.cache = nil
 
@@ -207,6 +225,10 @@ func (m *sortedMap) Ready(start uint64) types.Transactions {
 		heap.Pop(m.index)
 	}
 	m.cache = nil
+
+	for _, tx := range ready {
+		log.Info(fmt.Sprintf("List/Ready remove tx: %v", tx.Hash()))
+	}
 
 	return ready
 }
