@@ -375,6 +375,7 @@ func (pool *LegacyPool) loop() {
 				if time.Since(pool.beats[addr]) > pool.config.Lifetime {
 					list := pool.queue[addr].Flatten()
 					for _, tx := range list {
+						log.Info("LegacyPool/loop Queue Tx lifetime timeout!")
 						pool.removeTx(tx.Hash(), true)
 					}
 					queuedEvictionMeter.Mark(int64(len(list)))
@@ -899,9 +900,6 @@ func (pool *LegacyPool) promoteTx(addr common.Address, hash common.Hash, tx *typ
 
 	// Successful promotion, bump the heartbeat
 	pool.beats[addr] = time.Now()
-	pending_num, queued_num := pool.stats()
-	log.Info(fmt.Sprintf("LegacyPool/promoteTx Pending Len: %v", pending_num))
-	log.Info(fmt.Sprintf("LegacyPool/promoteTx Queued Len: %v", queued_num))
 	return true
 }
 
