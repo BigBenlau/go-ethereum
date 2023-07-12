@@ -654,7 +654,7 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 
 	// If the transaction fails basic validation, discard it
 	if err := pool.validateTx(tx, isLocal); err != nil {
-		log.Info("LegacyPool/add Discarding invalid transaction", "hash", hash, "err", err)
+		log.Info(fmt.Sprintf("LegacyPool/add Discarding invalid transaction. hash=%v", hash), "err", err)
 		log.Trace("Discarding invalid transaction", "hash", hash, "err", err)
 		invalidTxMeter.Mark(1)
 		return false, err
@@ -667,9 +667,9 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 	if uint64(pool.all.Slots()+numSlots(tx)) > pool.config.GlobalSlots+pool.config.GlobalQueue {
 		// If the new transaction is underpriced, don't accept it
 		log.Info(fmt.Sprintf("All slots:%v, numSlots:%v, GlobalSlots+GlobalQueue:%v", pool.all.Slots(), numSlots(tx), pool.config.GlobalSlots+pool.config.GlobalQueue))
-		log.Info("LegacyPool/add Pool is Full.", "hash", hash)
+		log.Info(fmt.Sprintf("LegacyPool/add Pool is Full. hash=%v", hash))
 		if !isLocal && pool.priced.Underpriced(tx) {
-			log.Info("LegacyPool/add Tx underprice.", "hash", hash)
+			log.Info(fmt.Sprintf("LegacyPool/add Tx underprice. hash=%v", hash))
 			log.Trace("Discarding underpriced transaction", "hash", hash, "gasTipCap", tx.GasTipCap(), "gasFeeCap", tx.GasFeeCap())
 			underpricedTxMeter.Mark(1)
 			return false, txpool.ErrUnderpriced
@@ -882,7 +882,7 @@ func (pool *LegacyPool) promoteTx(addr common.Address, hash common.Hash, tx *typ
 		pool.all.Remove(hash)
 		pool.priced.Removed(1)
 		pendingDiscardMeter.Mark(1)
-		log.Info("")
+		log.Info(fmt.Sprintf("promoteTx %v failed!!", hash.Hex()))
 		return false
 	}
 	// Otherwise discard any previous transaction and mark this
@@ -1118,7 +1118,7 @@ func (pool *LegacyPool) removeTx(hash common.Hash, outofbound bool) int {
 			// Postpone any invalidated transactions
 			for _, tx := range invalids {
 				// Internal shuffle shouldn't touch the lookup set.
-				log.Info(fmt.Sprintf("LegacyPool/removeTx Tx back to Queue: %v", hash))
+				log.Info(fmt.Sprintf("LegacyPool/removeTx Tx back to Queue: %v", tx.Hash()))
 				pool.enqueueTx(tx.Hash(), tx, false, false)
 			}
 			// Update the account nonce if needed
@@ -1445,8 +1445,6 @@ func (pool *LegacyPool) promoteExecutables(accounts []common.Address) []*types.T
 			continue // Just in case someone calls with a non existing account
 		}
 
-		log.Info(fmt.Sprintf("Legacy/promoteExecutables Start a new sender address: %v", addr))
-
 		// Drop all transactions that are deemed too old (low nonce)
 		forwards := list.Forward(pool.currentState.GetNonce(addr))
 		for _, tx := range forwards {
@@ -1477,6 +1475,11 @@ func (pool *LegacyPool) promoteExecutables(accounts []common.Address) []*types.T
 				promoted = append(promoted, tx)
 			}
 		}
+
+		pending_num, queued_num := pool.stats()
+		log.Info(fmt.Sprintf("LegacyPool/promoteTx Pending Len: %v", pending_num))
+		log.Info(fmt.Sprintf("LegacyPool/promoteTx Queued Len: %v", queued_num))
+
 		log.Trace("Promoted queued transactions", "count", len(promoted))
 		queuedGauge.Dec(int64(len(readies)))
 
@@ -1520,7 +1523,6 @@ func (pool *LegacyPool) truncatePending() {
 		log.Info("LegacyPool/truncatePending no need to truncate pending")
 		return
 	}
-	log.Info("LegacyPool/truncatePending have to truncate pending, delete some tx.")
 
 	pendingBeforeCap := pending
 	// Assemble a spam order to penalize large transactors first
@@ -1531,6 +1533,8 @@ func (pool *LegacyPool) truncatePending() {
 			spammers.Push(addr, int64(list.Len()))
 		}
 	}
+
+	log.Info(fmt.Sprintf("LegacyPool/truncatePending spammers empty checking result: %v", spammers.Empty()))
 
 	// Gradually drop transactions from offenders
 	offenders := []common.Address{}
