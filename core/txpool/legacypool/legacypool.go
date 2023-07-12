@@ -829,6 +829,7 @@ func (pool *LegacyPool) enqueueTx(hash common.Hash, tx *types.Transaction, local
 		pool.all.Remove(old.Hash())
 		pool.priced.Removed(1)
 		queuedReplaceMeter.Mark(1)
+		log.Info(fmt.Sprintf("LegacyPool/enqueueTx Replace existing queued transaction: %v", old.Hash()))
 	} else {
 		// Nothing was replaced, bump the queued counter
 		queuedGauge.Inc(1)
