@@ -741,7 +741,7 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 		}
 		// New transaction is better, replace old one
 		if old != nil {
-			log.Info(fmt.Sprintf("LegacyPool/add Replace existing transactions!! new tx: %v, old tx: %v", hash, old.Hash()))
+			log.Info(fmt.Sprintf("LegacyPool/add Replace existing transactions!! new tx: %v, old tx: %v", hash, old.Hash())) // The new tx still in pending
 			pool.all.Remove(old.Hash())
 			pool.priced.Removed(1)
 			pendingReplaceMeter.Mark(1)
@@ -1290,6 +1290,11 @@ func (pool *LegacyPool) runReorg(done chan struct{}, reset *txpoolResetRequest, 
 	// because of another transaction (e.g. higher gas price).
 	if reset != nil {
 		pool.demoteUnexecutables()
+
+		pending_num, queued_num := pool.stats()
+		log.Info(fmt.Sprintf("LegacyPool/promoteTx Pending Len: %v", pending_num))
+		log.Info(fmt.Sprintf("LegacyPool/promoteTx Queued Len: %v", queued_num))
+
 		if reset.newHead != nil {
 			if pool.chainconfig.IsLondon(new(big.Int).Add(reset.newHead.Number, big.NewInt(1))) {
 				pendingBaseFee := misc.CalcBaseFee(pool.chainconfig, reset.newHead)
@@ -1474,9 +1479,11 @@ func (pool *LegacyPool) promoteExecutables(accounts []common.Address) []*types.T
 			}
 		}
 
-		pending_num, queued_num := pool.stats()
-		log.Info(fmt.Sprintf("LegacyPool/promoteTx Pending Len: %v", pending_num))
-		log.Info(fmt.Sprintf("LegacyPool/promoteTx Queued Len: %v", queued_num))
+		if len(readies) > 0 {
+			pending_num, queued_num := pool.stats()
+			log.Info(fmt.Sprintf("LegacyPool/promoteTx Pending Len: %v", pending_num))
+			log.Info(fmt.Sprintf("LegacyPool/promoteTx Queued Len: %v", queued_num))
+		}
 
 		log.Trace("Promoted queued transactions", "count", len(promoted))
 		queuedGauge.Dec(int64(len(readies)))
