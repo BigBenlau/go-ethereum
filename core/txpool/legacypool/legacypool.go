@@ -1445,12 +1445,13 @@ func (pool *LegacyPool) promoteExecutables(accounts []common.Address) []*types.T
 
 		// Drop all transactions that are deemed too old (low nonce)
 		forwards := list.Forward(pool.currentState.GetNonce(addr))
+		if len(forwards) > 0 {
+			log.Info("LegacyPool/promoteExecutables Removed old queued transactions", "count", len(forwards))
+		}
 		for _, tx := range forwards {
 			hash := tx.Hash()
 			pool.all.Remove(hash)
-		}
-		if len(forwards) > 0 {
-			log.Info("LegacyPool/promoteExecutables Removed old queued transactions", "count", len(forwards))
+			log.Info(fmt.Sprintf("LegacyPool/promoteExecutables Removed old queued transaction hash: %v", hash))
 		}
 		log.Trace("Removed old queued transactions", "count", len(forwards))
 		// Drop all transactions that are too costly (low balance or out of gas)
