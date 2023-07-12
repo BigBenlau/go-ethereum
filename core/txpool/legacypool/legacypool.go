@@ -736,13 +736,13 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 	if list := pool.pending[from]; list != nil && list.Contains(tx.Nonce()) {
 		// Nonce already pending, check if required price bump is met
 		inserted, old := list.Add(tx, pool.config.PriceBump)
-		log.Info(fmt.Sprintf("LegacyPool/add Replace existing transactions!! new tx: %v, old tx: %v", hash, old.Hash()))
 		if !inserted {
 			pendingDiscardMeter.Mark(1)
 			return false, txpool.ErrReplaceUnderpriced
 		}
 		// New transaction is better, replace old one
 		if old != nil {
+			log.Info(fmt.Sprintf("LegacyPool/add Replace existing transactions!! new tx: %v, old tx: %v", hash, old.Hash()))
 			pool.all.Remove(old.Hash())
 			pool.priced.Removed(1)
 			pendingReplaceMeter.Mark(1)
@@ -751,7 +751,6 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 		pool.priced.Put(tx, isLocal)
 		pool.journalTx(from, tx)
 		pool.queueTxEvent(tx)
-		log.Info("LegacyPool/add Pooled new executable transaction replace old transaction.", "hash", hash, "from", from, "to", tx.To())
 		log.Trace("Pooled new executable transaction", "hash", hash, "from", from, "to", tx.To())
 
 		// Successful promotion, bump the heartbeat
