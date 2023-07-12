@@ -639,10 +639,9 @@ func (pool *LegacyPool) validateTx(tx *types.Transaction, local bool) error {
 // be added to the allowlist, preventing any associated transaction from being dropped
 // out of the pool due to pricing constraints.
 func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, err error) {
-	log.Info("LegacyPool/add **.")
 	// If the transaction is already known, discard it
 	hash := tx.Hash()
-	log.Info(fmt.Sprintf("add %v", hash.Hex()))
+	log.Info(fmt.Sprintf("LegacyPool/add ** hash: %v.", hash.Hex()))
 	if pool.all.Get(hash) != nil {
 		log.Info("LegacyPool/add Discarding already known transaction", "hash", hash)
 		log.Trace("Discarding already known transaction", "hash", hash)
@@ -751,6 +750,7 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 		pool.priced.Put(tx, isLocal)
 		pool.journalTx(from, tx)
 		pool.queueTxEvent(tx)
+		log.Info(fmt.Sprintf("LegacyPool/add Pooled new executable transaction: %v", hash.Hex()))
 		log.Trace("Pooled new executable transaction", "hash", hash, "from", from, "to", tx.To())
 
 		// Successful promotion, bump the heartbeat
@@ -763,7 +763,7 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 		log.Info("LegacyPool/add enqueue new tx Error!!!!")
 		return false, err
 	}
-	log.Info("LegacyPool/add enqueue new transactions into queued.")
+	log.Info(fmt.Sprintf("add %v", hash.Hex()))
 	// Mark local addresses and journal local transactions
 	if local && !pool.locals.contains(from) {
 		log.Info("Setting new local account", "address", from)
