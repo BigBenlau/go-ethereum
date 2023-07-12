@@ -734,9 +734,9 @@ func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, e
 
 	// Try to replace an existing transaction in the pending pool
 	if list := pool.pending[from]; list != nil && list.Contains(tx.Nonce()) {
-		log.Info("LegacyPool/add Replace existing transactions!!", "hash", hash)
 		// Nonce already pending, check if required price bump is met
 		inserted, old := list.Add(tx, pool.config.PriceBump)
+		log.Info(fmt.Sprintf("LegacyPool/add Replace existing transactions!! new tx: %v, old tx: %v", hash, old.Hash()))
 		if !inserted {
 			pendingDiscardMeter.Mark(1)
 			return false, txpool.ErrReplaceUnderpriced
