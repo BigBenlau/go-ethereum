@@ -641,7 +641,7 @@ func (pool *LegacyPool) validateTx(tx *types.Transaction, local bool) error {
 func (pool *LegacyPool) add(tx *types.Transaction, local bool) (replaced bool, err error) {
 	// If the transaction is already known, discard it
 	hash := tx.Hash()
-	log.Info(fmt.Sprintf("LegacyPool/add ** hash: %v.", hash.Hex()))
+	log.Info(fmt.Sprintf("LegacyPool/add ** hash: %v", hash.Hex()))
 	if pool.all.Get(hash) != nil {
 		log.Info("LegacyPool/add Discarding already known transaction", "hash", hash)
 		log.Trace("Discarding already known transaction", "hash", hash)
@@ -1464,6 +1464,7 @@ func (pool *LegacyPool) promoteExecutables(accounts []common.Address) []*types.T
 		for _, tx := range drops {
 			hash := tx.Hash()
 			pool.all.Remove(hash)
+			log.Info(fmt.Sprintf("LegacyPool/promoteExecutables Removed unpayable queued transaction hash: %v", hash))
 		}
 		if len(drops) > 0 {
 			log.Info("LegacyPool/promoteExecutables Removed unpayable queued transactions", "count", len(drops))
