@@ -914,7 +914,7 @@ func (pool *LegacyPool) Add(txs []*txpool.Transaction, local bool, sync bool) []
 	for i, tx := range txs {
 		unwrapped[i] = tx.Tx
 	}
-	var errs = make([]error, 0)
+	var errs = make([]error, len(txs))
 	return errs
 }
 
