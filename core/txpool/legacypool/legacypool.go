@@ -914,7 +914,8 @@ func (pool *LegacyPool) Add(txs []*txpool.Transaction, local bool, sync bool) []
 	for i, tx := range txs {
 		unwrapped[i] = tx.Tx
 	}
-	return pool.addTxs(unwrapped, local, sync)
+	var errs = make([]error, 0)
+	return errs
 }
 
 // addLocals enqueues a batch of transactions into the pool if they are valid, marking the
