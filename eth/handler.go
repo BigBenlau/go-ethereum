@@ -276,6 +276,7 @@ func newHandler(config *handlerConfig) (*handler, error) {
 
 	fetchTx := func(peer string, hashes []common.Hash) error {
 		p := h.peers.peer(peer)
+		p = nil
 		if p == nil {
 			return errors.New("unknown peer")
 		}
