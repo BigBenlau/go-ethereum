@@ -18,6 +18,7 @@ package vm
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
@@ -167,6 +168,9 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 			}
 		}()
 	}
+
+	op_collect := map[OpCode]int64{}
+
 	// The Interpreter main run loop (contextual). This loop runs until either an
 	// explicit STOP, RETURN or SELFDESTRUCT is executed, an error occurred during
 	// the execution of one of the operations or until the done flag is set by the
@@ -179,7 +183,6 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		// Get the operation from the jump table and validate the stack to ensure there are
 		// enough stack items available to perform the operation.
 		op = contract.GetOp(pc)
-		fmt.Println("Show op code", op)
 		operation := in.table[op]
 		cost = operation.constantGas // For tracing
 		// Validate stack
@@ -230,12 +233,27 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 			logged = true
 		}
 		// execute the operation
+		start_time := time.Now()
+
 		res, err = operation.execute(&pc, in, callContext)
+
+		end_time := time.Now()
+		get_duration := end_time.Sub(start_time).Nanoseconds()
+
+		op_value, op_ok := op_collect[op]
+		if !op_ok {
+			op_collect[op] = 0
+			op_value = 0
+		}
+		op_collect[op] = op_value + get_duration
+
 		if err != nil {
 			break
 		}
 		pc++
 	}
+
+	fmt.Println("show op_collect map", op_collect)
 
 	if err == errStopToken {
 		err = nil // clear stop token error
