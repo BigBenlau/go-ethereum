@@ -107,7 +107,7 @@ func NewEVMInterpreter(evm *EVM) *EVMInterpreter {
 // It's important to note that any errors returned by the interpreter should be
 // considered a revert-and-consume-all-gas operation except for
 // ErrExecutionReverted which means revert-and-keep-gas-left.
-func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (ret []byte, err error) {
+func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool, op_count map[string]int64, op_time map[string]int64) (ret []byte, err error) {
 	// Increment the call depth which is restricted to 1024
 	in.evm.depth++
 	defer func() { in.evm.depth-- }()
@@ -168,8 +168,6 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 			}
 		}()
 	}
-
-	op_collect := map[OpCode]int64{}
 
 	// The Interpreter main run loop (contextual). This loop runs until either an
 	// explicit STOP, RETURN or SELFDESTRUCT is executed, an error occurred during
@@ -240,12 +238,18 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		end_time := time.Now()
 		get_duration := end_time.Sub(start_time).Nanoseconds()
 
-		op_value, op_ok := op_collect[op]
-		if !op_ok {
-			op_collect[op] = 0
-			op_value = 0
+		op_str := op.String()
+		op_count_value, op_count_ok := op_count[op_str]
+		op_time_value, _ := op_time[op_str]
+		if !op_count_ok {
+			op_count[op_str] = 0
+			op_count_value = 0
+			op_time[op_str] = 0
+			op_time_value = 0
 		}
-		op_collect[op] = op_value + get_duration
+
+		op_count[op_str] = op_count_value + 1
+		op_time[op_str] = op_time_value + get_duration
 
 		if err != nil {
 			break
@@ -253,7 +257,7 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		pc++
 	}
 
-	fmt.Println("show op_collect map", op_collect)
+	fmt.Println("show op_count map", op_count, "and op_time map", op_time)
 
 	if err == errStopToken {
 		err = nil // clear stop token error
