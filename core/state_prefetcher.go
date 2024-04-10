@@ -89,6 +89,6 @@ func precacheTransaction(msg *Message, config *params.ChainConfig, gaspool *GasP
 	// Update the evm with the new transaction context.
 	evm.Reset(NewEVMTxContext(msg), statedb)
 	// Add addresses to access list if applicable
-	_, err, _, _ := ApplyMessage(evm, msg, gaspool)
+	_, err, _, _, _ := ApplyMessage(evm, msg, gaspool)
 	return err
 }

@@ -57,7 +57,7 @@ func NewStateProcessor(config *params.ChainConfig, bc *BlockChain, engine consen
 // Process returns the receipts and logs accumulated during the process and
 // returns the amount of gas that was used in the process. If any of the
 // transactions failed to execute due to insufficient gas it will return an error.
-func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg vm.Config) (types.Receipts, []*types.Log, uint64, error, map[string]int64, map[string]int64) {
+func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg vm.Config) (types.Receipts, []*types.Log, uint64, error, map[string]int64, map[string]int64, map[string][]int64) {
 	var (
 		receipts    types.Receipts
 		usedGas     = new(uint64)
@@ -81,23 +81,24 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	}
 
 	var (
-		op_count = map[string]int64{}
-		op_time  = map[string]int64{}
+		op_count     = map[string]int64{}
+		op_time      = map[string]int64{}
+		op_time_list = map[string][]int64{}
 	)
 
 	// Iterate over and process the individual transactions
 	for i, tx := range block.Transactions() {
 		msg, err := TransactionToMessage(tx, signer, header.BaseFee)
 		if err != nil {
-			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err), nil, nil
+			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err), nil, nil, nil
 		}
 
 		fmt.Println("\nStart transactoin. Idx: ", i, "and hash: ", tx.Hash().String())
 
 		statedb.SetTxContext(tx.Hash(), i)
-		receipt, err, tx_op_count, tx_op_time := applyTransaction(msg, p.config, gp, statedb, blockNumber, blockHash, tx, usedGas, vmenv)
+		receipt, err, tx_op_count, tx_op_time, tx_op_time_list := applyTransaction(msg, p.config, gp, statedb, blockNumber, blockHash, tx, usedGas, vmenv)
 		if err != nil {
-			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err), nil, nil
+			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err), nil, nil, nil
 		}
 		receipts = append(receipts, receipt)
 		allLogs = append(allLogs, receipt.Logs...)
@@ -106,36 +107,39 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 			tx_op_time := tx_op_time[tx_op_code]
 			op_count[tx_op_code] += tx_op_count
 			op_time[tx_op_code] += tx_op_time
+			op_time_list[tx_op_code] = append(op_time_list[tx_op_code], tx_op_time_list[tx_op_code]...)
 		}
 
-		fmt.Println("op_count in state processor is ", op_count)
+		fmt.Println("\nop_count in state processor is ", op_count)
 		fmt.Println("op_time in state processor is ", op_time)
+		fmt.Println("op_time_list in state processor is ", op_time_list)
 	}
 	// Fail if Shanghai not enabled and len(withdrawals) is non-zero.
 	withdrawals := block.Withdrawals()
 	if len(withdrawals) > 0 && !p.config.IsShanghai(block.Number(), block.Time()) {
-		return nil, nil, 0, errors.New("withdrawals before shanghai"), nil, nil
+		return nil, nil, 0, errors.New("withdrawals before shanghai"), nil, nil, nil
 	}
 	// Finalize the block, applying any consensus engine specific extras (e.g. block rewards)
 	p.engine.Finalize(p.bc, header, statedb, block.Transactions(), block.Uncles(), withdrawals)
 
-	return receipts, allLogs, *usedGas, nil, op_count, op_time
+	return receipts, allLogs, *usedGas, nil, op_count, op_time, op_time_list
 }
 
-func applyTransaction(msg *Message, config *params.ChainConfig, gp *GasPool, statedb *state.StateDB, blockNumber *big.Int, blockHash common.Hash, tx *types.Transaction, usedGas *uint64, evm *vm.EVM) (*types.Receipt, error, map[string]int64, map[string]int64) {
+func applyTransaction(msg *Message, config *params.ChainConfig, gp *GasPool, statedb *state.StateDB, blockNumber *big.Int, blockHash common.Hash, tx *types.Transaction, usedGas *uint64, evm *vm.EVM) (*types.Receipt, error, map[string]int64, map[string]int64, map[string][]int64) {
 	// Create a new context to be used in the EVM environment.
 	txContext := NewEVMTxContext(msg)
 	evm.Reset(txContext, statedb)
 
 	var (
-		op_count map[string]int64
-		op_time  map[string]int64
+		op_count     map[string]int64
+		op_time      map[string]int64
+		op_time_list map[string][]int64
 	)
 
 	// Apply the transaction to the current state (included in the env).
-	result, err, op_count, op_time := ApplyMessage(evm, msg, gp)
+	result, err, op_count, op_time, op_time_list := ApplyMessage(evm, msg, gp)
 	if err != nil {
-		return nil, err, nil, nil
+		return nil, err, nil, nil, nil
 	}
 
 	// Update the state with pending changes.
@@ -174,17 +178,17 @@ func applyTransaction(msg *Message, config *params.ChainConfig, gp *GasPool, sta
 	receipt.BlockHash = blockHash
 	receipt.BlockNumber = blockNumber
 	receipt.TransactionIndex = uint(statedb.TxIndex())
-	return receipt, err, op_count, op_time
+	return receipt, err, op_count, op_time, op_time_list
 }
 
 // ApplyTransaction attempts to apply a transaction to the given state database
 // and uses the input parameters for its environment. It returns the receipt
 // for the transaction, gas used and an error if the transaction failed,
 // indicating the block was invalid.
-func ApplyTransaction(config *params.ChainConfig, bc ChainContext, author *common.Address, gp *GasPool, statedb *state.StateDB, header *types.Header, tx *types.Transaction, usedGas *uint64, cfg vm.Config) (*types.Receipt, error, map[string]int64, map[string]int64) {
+func ApplyTransaction(config *params.ChainConfig, bc ChainContext, author *common.Address, gp *GasPool, statedb *state.StateDB, header *types.Header, tx *types.Transaction, usedGas *uint64, cfg vm.Config) (*types.Receipt, error, map[string]int64, map[string]int64, map[string][]int64) {
 	msg, err := TransactionToMessage(tx, types.MakeSigner(config, header.Number, header.Time), header.BaseFee)
 	if err != nil {
-		return nil, err, nil, nil
+		return nil, err, nil, nil, nil
 	}
 	// Create a new context to be used in the EVM environment
 	blockContext := NewEVMBlockContext(header, bc, author)
@@ -209,6 +213,6 @@ func ProcessBeaconBlockRoot(beaconRoot common.Hash, vmenv *vm.EVM, statedb *stat
 	}
 	vmenv.Reset(NewEVMTxContext(msg), statedb)
 	statedb.AddAddressToAccessList(params.BeaconRootsStorageAddress)
-	_, _, _, _, _ = vmenv.Call(vm.AccountRef(msg.From), *msg.To, msg.Data, 30_000_000, common.U2560)
+	_, _, _, _, _, _ = vmenv.Call(vm.AccountRef(msg.From), *msg.To, msg.Data, 30_000_000, common.U2560)
 	statedb.Finalise(true)
 }

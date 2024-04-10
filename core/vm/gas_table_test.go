@@ -97,7 +97,7 @@ func TestEIP2200(t *testing.T) {
 		}
 		vmenv := NewEVM(vmctx, TxContext{}, statedb, params.AllEthashProtocolChanges, Config{ExtraEips: []int{2200}})
 
-		_, gas, err, _, _ := vmenv.Call(AccountRef(common.Address{}), address, nil, tt.gaspool, new(uint256.Int))
+		_, gas, err, _, _, _ := vmenv.Call(AccountRef(common.Address{}), address, nil, tt.gaspool, new(uint256.Int))
 		if err != tt.failure {
 			t.Errorf("test %d: failure mismatch: have %v, want %v", i, err, tt.failure)
 		}
@@ -153,7 +153,7 @@ func TestCreateGas(t *testing.T) {
 
 			vmenv := NewEVM(vmctx, TxContext{}, statedb, params.AllEthashProtocolChanges, config)
 			var startGas = uint64(testGas)
-			ret, gas, err, _, _ := vmenv.Call(AccountRef(common.Address{}), address, nil, startGas, new(uint256.Int))
+			ret, gas, err, _, _, _ := vmenv.Call(AccountRef(common.Address{}), address, nil, startGas, new(uint256.Int))
 			if err != nil {
 				return false
 			}
