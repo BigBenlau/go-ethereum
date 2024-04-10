@@ -1765,7 +1765,7 @@ func (bc *BlockChain) insertChain(chain types.Blocks, setHead bool) (int, error)
 
 		// Process block using the parent state as reference point
 		pstart := time.Now()
-		receipts, logs, usedGas, err, _, _, _ := bc.processor.Process(block, statedb, bc.vmConfig)
+		receipts, logs, usedGas, err, _, _, _, _ := bc.processor.Process(block, statedb, bc.vmConfig)
 		if err != nil {
 			bc.reportBlock(block, receipts, err)
 			followupInterrupt.Store(true)
