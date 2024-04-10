@@ -255,7 +255,7 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 
 		op_count[op_str] = op_count_value + 1
 		op_time[op_str] = op_time_value + get_duration
-		op_time_list[op_str] = append(op_time_list[op_str], op_time_value)
+		op_time_list[op_str] = append(op_time_list[op_str], get_duration)
 
 		if err != nil {
 			break
