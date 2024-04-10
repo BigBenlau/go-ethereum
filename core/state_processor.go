@@ -91,6 +91,9 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err), nil, nil
 		}
+
+		fmt.Println("\nStart transactoin. Idx: ", i, "and hash: ", tx.Hash().String())
+
 		statedb.SetTxContext(tx.Hash(), i)
 		receipt, err, tx_op_count, tx_op_time := applyTransaction(msg, p.config, gp, statedb, blockNumber, blockHash, tx, usedGas, vmenv)
 		if err != nil {
