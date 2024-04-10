@@ -260,8 +260,8 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		pc++
 	}
 
-	fmt.Println("show op_count map", op_count)
-	fmt.Println("show op_time map", op_time, "\n")
+	fmt.Println("1. show op_count map", op_count)
+	fmt.Println("2. show op_time map", op_time)
 
 	if err == errStopToken {
 		err = nil // clear stop token error
