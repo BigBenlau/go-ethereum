@@ -109,7 +109,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 			op_count[tx_op_code] += tx_op_count
 			op_time[tx_op_code] += tx_op_time
 			op_time_list[tx_op_code] = append(op_time_list[tx_op_code], tx_op_time_list[tx_op_code]...)
-			op_gas_list[tx_op_code] = append(tx_op_gas_list[tx_op_code], tx_op_gas_list[tx_op_code]...)
+			op_gas_list[tx_op_code] = append(op_gas_list[tx_op_code], tx_op_gas_list[tx_op_code]...)
 		}
 
 		fmt.Println("\nop_count in state processor is ", op_count)
