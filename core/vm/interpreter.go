@@ -107,7 +107,7 @@ func NewEVMInterpreter(evm *EVM) *EVMInterpreter {
 // It's important to note that any errors returned by the interpreter should be
 // considered a revert-and-consume-all-gas operation except for
 // ErrExecutionReverted which means revert-and-keep-gas-left.
-func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool, op_count map[string]int64, op_time map[string]int64) (ret []byte, err error) {
+func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (ret []byte, err error, op_count map[string]int64, op_time map[string]int64) {
 	// Increment the call depth which is restricted to 1024
 	in.evm.depth++
 	defer func() { in.evm.depth-- }()
@@ -125,7 +125,7 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool, o
 
 	// Don't bother with the execution if there's no code.
 	if len(contract.Code) == 0 {
-		return nil, nil
+		return nil, nil, nil, nil
 	}
 
 	var (
@@ -169,6 +169,9 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool, o
 		}()
 	}
 
+	op_count = map[string]int64{}
+	op_time = map[string]int64{}
+
 	// The Interpreter main run loop (contextual). This loop runs until either an
 	// explicit STOP, RETURN or SELFDESTRUCT is executed, an error occurred during
 	// the execution of one of the operations or until the done flag is set by the
@@ -185,12 +188,12 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool, o
 		cost = operation.constantGas // For tracing
 		// Validate stack
 		if sLen := stack.len(); sLen < operation.minStack {
-			return nil, &ErrStackUnderflow{stackLen: sLen, required: operation.minStack}
+			return nil, &ErrStackUnderflow{stackLen: sLen, required: operation.minStack}, nil, nil
 		} else if sLen > operation.maxStack {
-			return nil, &ErrStackOverflow{stackLen: sLen, limit: operation.maxStack}
+			return nil, &ErrStackOverflow{stackLen: sLen, limit: operation.maxStack}, nil, nil
 		}
 		if !contract.UseGas(cost) {
-			return nil, ErrOutOfGas
+			return nil, ErrOutOfGas, nil, nil
 		}
 		if operation.dynamicGas != nil {
 			// All ops with a dynamic memory usage also has a dynamic gas cost.
@@ -202,12 +205,12 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool, o
 			if operation.memorySize != nil {
 				memSize, overflow := operation.memorySize(stack)
 				if overflow {
-					return nil, ErrGasUintOverflow
+					return nil, ErrGasUintOverflow, nil, nil
 				}
 				// memory is expanded in words of 32 bytes. Gas
 				// is also calculated in words.
 				if memorySize, overflow = math.SafeMul(toWordSize(memSize), 32); overflow {
-					return nil, ErrGasUintOverflow
+					return nil, ErrGasUintOverflow, nil, nil
 				}
 			}
 			// Consume the gas and return an error if not enough gas is available.
@@ -216,7 +219,7 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool, o
 			dynamicCost, err = operation.dynamicGas(in.evm, contract, stack, mem, memorySize)
 			cost += dynamicCost // for tracing
 			if err != nil || !contract.UseGas(dynamicCost) {
-				return nil, ErrOutOfGas
+				return nil, ErrOutOfGas, nil, nil
 			}
 			// Do tracing before memory expansion
 			if debug {
@@ -240,7 +243,7 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool, o
 
 		op_str := op.String()
 		op_count_value, op_count_ok := op_count[op_str]
-		op_time_value, _ := op_time[op_str]
+		op_time_value := op_time[op_str]
 		if !op_count_ok {
 			op_count[op_str] = 0
 			op_count_value = 0
@@ -263,5 +266,5 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool, o
 		err = nil // clear stop token error
 	}
 
-	return res, err
+	return res, err, op_count, op_time
 }

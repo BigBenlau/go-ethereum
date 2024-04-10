@@ -179,8 +179,8 @@ func TransactionToMessage(tx *types.Transaction, s types.Signer, baseFee *big.In
 // the gas used (which includes gas refunds) and an error if it failed. An error always
 // indicates a core error meaning that the message would always fail for that particular
 // state and would never be accepted within a block.
-func ApplyMessage(evm *vm.EVM, msg *Message, gp *GasPool, op_count map[string]int64, op_time map[string]int64) (*ExecutionResult, error) {
-	return NewStateTransition(evm, msg, gp).TransitionDb(op_count, op_time)
+func ApplyMessage(evm *vm.EVM, msg *Message, gp *GasPool) (*ExecutionResult, error, map[string]int64, map[string]int64) {
+	return NewStateTransition(evm, msg, gp).TransitionDb()
 }
 
 // StateTransition represents a state transition.
@@ -364,7 +364,7 @@ func (st *StateTransition) preCheck() error {
 //
 // However if any consensus issue encountered, return the error directly with
 // nil evm execution result.
-func (st *StateTransition) TransitionDb(op_count map[string]int64, op_time map[string]int64) (*ExecutionResult, error) {
+func (st *StateTransition) TransitionDb() (*ExecutionResult, error, map[string]int64, map[string]int64) {
 	// First check this message satisfies all consensus rules before
 	// applying the message. The rules include these clauses
 	//
@@ -377,7 +377,7 @@ func (st *StateTransition) TransitionDb(op_count map[string]int64, op_time map[s
 
 	// Check clauses 1-3, buy gas if everything is correct
 	if err := st.preCheck(); err != nil {
-		return nil, err
+		return nil, err, nil, nil
 	}
 
 	if tracer := st.evm.Config.Tracer; tracer != nil {
@@ -397,25 +397,25 @@ func (st *StateTransition) TransitionDb(op_count map[string]int64, op_time map[s
 	// Check clauses 4-5, subtract intrinsic gas if everything is correct
 	gas, err := IntrinsicGas(msg.Data, msg.AccessList, contractCreation, rules.IsHomestead, rules.IsIstanbul, rules.IsShanghai)
 	if err != nil {
-		return nil, err
+		return nil, err, nil, nil
 	}
 	if st.gasRemaining < gas {
-		return nil, fmt.Errorf("%w: have %d, want %d", ErrIntrinsicGas, st.gasRemaining, gas)
+		return nil, fmt.Errorf("%w: have %d, want %d", ErrIntrinsicGas, st.gasRemaining, gas), nil, nil
 	}
 	st.gasRemaining -= gas
 
 	// Check clause 6
 	value, overflow := uint256.FromBig(msg.Value)
 	if overflow {
-		return nil, fmt.Errorf("%w: address %v", ErrInsufficientFundsForTransfer, msg.From.Hex())
+		return nil, fmt.Errorf("%w: address %v", ErrInsufficientFundsForTransfer, msg.From.Hex()), nil, nil
 	}
 	if !value.IsZero() && !st.evm.Context.CanTransfer(st.state, msg.From, value) {
-		return nil, fmt.Errorf("%w: address %v", ErrInsufficientFundsForTransfer, msg.From.Hex())
+		return nil, fmt.Errorf("%w: address %v", ErrInsufficientFundsForTransfer, msg.From.Hex()), nil, nil
 	}
 
 	// Check whether the init code size has been exceeded.
 	if rules.IsShanghai && contractCreation && len(msg.Data) > params.MaxInitCodeSize {
-		return nil, fmt.Errorf("%w: code size %v limit %v", ErrMaxInitCodeSizeExceeded, len(msg.Data), params.MaxInitCodeSize)
+		return nil, fmt.Errorf("%w: code size %v limit %v", ErrMaxInitCodeSizeExceeded, len(msg.Data), params.MaxInitCodeSize), nil, nil
 	}
 
 	// Execute the preparatory steps for state transition which includes:
@@ -424,15 +424,17 @@ func (st *StateTransition) TransitionDb(op_count map[string]int64, op_time map[s
 	st.state.Prepare(rules, msg.From, st.evm.Context.Coinbase, msg.To, vm.ActivePrecompiles(rules), msg.AccessList)
 
 	var (
-		ret   []byte
-		vmerr error // vm errors do not effect consensus and are therefore not assigned to err
+		ret      []byte
+		vmerr    error // vm errors do not effect consensus and are therefore not assigned to err
+		op_count map[string]int64
+		op_time  map[string]int64
 	)
 	if contractCreation {
 		ret, _, st.gasRemaining, vmerr = st.evm.Create(sender, msg.Data, st.gasRemaining, value)
 	} else {
 		// Increment the nonce for the next transaction
 		st.state.SetNonce(msg.From, st.state.GetNonce(sender.Address())+1)
-		ret, st.gasRemaining, vmerr = st.evm.Call(sender, st.to(), msg.Data, st.gasRemaining, value, op_count, op_time)
+		ret, st.gasRemaining, vmerr, op_count, op_time = st.evm.Call(sender, st.to(), msg.Data, st.gasRemaining, value)
 	}
 
 	var gasRefund uint64
@@ -464,7 +466,7 @@ func (st *StateTransition) TransitionDb(op_count map[string]int64, op_time map[s
 		RefundedGas: gasRefund,
 		Err:         vmerr,
 		ReturnData:  ret,
-	}, nil
+	}, nil, op_count, op_time
 }
 
 func (st *StateTransition) refundGas(refundQuotient uint64) uint64 {
