@@ -107,7 +107,7 @@ func NewEVMInterpreter(evm *EVM) *EVMInterpreter {
 // It's important to note that any errors returned by the interpreter should be
 // considered a revert-and-consume-all-gas operation except for
 // ErrExecutionReverted which means revert-and-keep-gas-left.
-func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (ret []byte, err error, op_count map[string]int64, op_time map[string]int64, op_time_list map[string][]int64) {
+func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (ret []byte, err error, op_count map[string]int64, op_time map[string]int64, op_time_list map[string][][]uint64) {
 	// Increment the call depth which is restricted to 1024
 	in.evm.depth++
 	defer func() { in.evm.depth-- }()
@@ -171,7 +171,7 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 
 	op_count = map[string]int64{}
 	op_time = map[string]int64{}
-	op_time_list = map[string][]int64{}
+	op_time_list = map[string][][]uint64{}
 
 	// The Interpreter main run loop (contextual). This loop runs until either an
 	// explicit STOP, RETURN or SELFDESTRUCT is executed, an error occurred during
@@ -250,12 +250,13 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 			op_count_value = 0
 			op_time[op_str] = 0
 			op_time_value = 0
-			op_time_list[op_str] = []int64{}
+			op_time_list[op_str] = [][]uint64{}
 		}
 
 		op_count[op_str] = op_count_value + 1
 		op_time[op_str] = op_time_value + get_duration
-		op_time_list[op_str] = append(op_time_list[op_str], get_duration)
+		op_time_list[op_str][0] = append(op_time_list[op_str][0], uint64(get_duration))
+		op_time_list[op_str][1] = append(op_time_list[op_str][1], cost)
 
 		if err != nil {
 			break

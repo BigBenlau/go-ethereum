@@ -179,7 +179,7 @@ func TransactionToMessage(tx *types.Transaction, s types.Signer, baseFee *big.In
 // the gas used (which includes gas refunds) and an error if it failed. An error always
 // indicates a core error meaning that the message would always fail for that particular
 // state and would never be accepted within a block.
-func ApplyMessage(evm *vm.EVM, msg *Message, gp *GasPool) (*ExecutionResult, error, map[string]int64, map[string]int64, map[string][]int64) {
+func ApplyMessage(evm *vm.EVM, msg *Message, gp *GasPool) (*ExecutionResult, error, map[string]int64, map[string]int64, map[string][][]uint64) {
 	return NewStateTransition(evm, msg, gp).TransitionDb()
 }
 
@@ -364,7 +364,7 @@ func (st *StateTransition) preCheck() error {
 //
 // However if any consensus issue encountered, return the error directly with
 // nil evm execution result.
-func (st *StateTransition) TransitionDb() (*ExecutionResult, error, map[string]int64, map[string]int64, map[string][]int64) {
+func (st *StateTransition) TransitionDb() (*ExecutionResult, error, map[string]int64, map[string]int64, map[string][][]uint64) {
 	// First check this message satisfies all consensus rules before
 	// applying the message. The rules include these clauses
 	//
@@ -428,7 +428,7 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error, map[string]i
 		vmerr        error // vm errors do not effect consensus and are therefore not assigned to err
 		op_count     map[string]int64
 		op_time      map[string]int64
-		op_time_list map[string][]int64
+		op_time_list map[string][][]uint64
 	)
 	if contractCreation {
 		ret, _, st.gasRemaining, vmerr = st.evm.Create(sender, msg.Data, st.gasRemaining, value)

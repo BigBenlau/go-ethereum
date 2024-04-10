@@ -57,7 +57,7 @@ func NewStateProcessor(config *params.ChainConfig, bc *BlockChain, engine consen
 // Process returns the receipts and logs accumulated during the process and
 // returns the amount of gas that was used in the process. If any of the
 // transactions failed to execute due to insufficient gas it will return an error.
-func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg vm.Config) (types.Receipts, []*types.Log, uint64, error, map[string]int64, map[string]int64, map[string][]int64) {
+func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg vm.Config) (types.Receipts, []*types.Log, uint64, error, map[string]int64, map[string]int64, map[string][][]uint64) {
 	var (
 		receipts    types.Receipts
 		usedGas     = new(uint64)
@@ -83,7 +83,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	var (
 		op_count     = map[string]int64{}
 		op_time      = map[string]int64{}
-		op_time_list = map[string][]int64{}
+		op_time_list = map[string][][]uint64{}
 	)
 
 	// Iterate over and process the individual transactions
@@ -112,7 +112,6 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 
 		fmt.Println("\nop_count in state processor is ", op_count)
 		fmt.Println("op_time in state processor is ", op_time)
-		fmt.Println("op_time_list in state processor is ", op_time_list)
 	}
 	// Fail if Shanghai not enabled and len(withdrawals) is non-zero.
 	withdrawals := block.Withdrawals()
@@ -125,7 +124,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	return receipts, allLogs, *usedGas, nil, op_count, op_time, op_time_list
 }
 
-func applyTransaction(msg *Message, config *params.ChainConfig, gp *GasPool, statedb *state.StateDB, blockNumber *big.Int, blockHash common.Hash, tx *types.Transaction, usedGas *uint64, evm *vm.EVM) (*types.Receipt, error, map[string]int64, map[string]int64, map[string][]int64) {
+func applyTransaction(msg *Message, config *params.ChainConfig, gp *GasPool, statedb *state.StateDB, blockNumber *big.Int, blockHash common.Hash, tx *types.Transaction, usedGas *uint64, evm *vm.EVM) (*types.Receipt, error, map[string]int64, map[string]int64, map[string][][]uint64) {
 	// Create a new context to be used in the EVM environment.
 	txContext := NewEVMTxContext(msg)
 	evm.Reset(txContext, statedb)
@@ -133,7 +132,7 @@ func applyTransaction(msg *Message, config *params.ChainConfig, gp *GasPool, sta
 	var (
 		op_count     map[string]int64
 		op_time      map[string]int64
-		op_time_list map[string][]int64
+		op_time_list map[string][][]uint64
 	)
 
 	// Apply the transaction to the current state (included in the env).
@@ -185,7 +184,7 @@ func applyTransaction(msg *Message, config *params.ChainConfig, gp *GasPool, sta
 // and uses the input parameters for its environment. It returns the receipt
 // for the transaction, gas used and an error if the transaction failed,
 // indicating the block was invalid.
-func ApplyTransaction(config *params.ChainConfig, bc ChainContext, author *common.Address, gp *GasPool, statedb *state.StateDB, header *types.Header, tx *types.Transaction, usedGas *uint64, cfg vm.Config) (*types.Receipt, error, map[string]int64, map[string]int64, map[string][]int64) {
+func ApplyTransaction(config *params.ChainConfig, bc ChainContext, author *common.Address, gp *GasPool, statedb *state.StateDB, header *types.Header, tx *types.Transaction, usedGas *uint64, cfg vm.Config) (*types.Receipt, error, map[string]int64, map[string]int64, map[string][][]uint64) {
 	msg, err := TransactionToMessage(tx, types.MakeSigner(config, header.Number, header.Time), header.BaseFee)
 	if err != nil {
 		return nil, err, nil, nil, nil
