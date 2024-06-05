@@ -17,7 +17,6 @@
 package vm
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -719,7 +718,7 @@ func opCallCode(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([
 }
 
 func opDelegateCall(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
-	fmt.Println("Start opDelegateCall.")
+	// fmt.Println("Start opDelegateCall.")
 	stack := scope.Stack
 	// Pop gas. The actual gas is in interpreter.evm.callGasTemp.
 	// We use it as a temporary value
