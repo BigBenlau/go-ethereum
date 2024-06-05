@@ -17,6 +17,7 @@
 package vm
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -243,6 +244,9 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		get_duration := end_time.Sub(start_time).Nanoseconds()
 
 		op_str := op.String()
+
+		go fmt.Println("Opcode name is", op_str, ". Run time as nanos: {:?}", get_duration)
+
 		op_count_value, op_count_ok := op_count[op_str]
 		op_time_value := op_time[op_str]
 		if !op_count_ok {
