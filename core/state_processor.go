@@ -94,7 +94,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err), nil, nil, nil, nil
 		}
 
-		fmt.Println("\nStart transactoin. Idx: ", i, "and hash: ", tx.Hash().String())
+		// fmt.Println("\nStart transactoin. Idx: ", i, "and hash: ", tx.Hash().String())
 
 		statedb.SetTxContext(tx.Hash(), i)
 		receipt, err, tx_op_count, tx_op_time, tx_op_time_list, tx_op_gas_list := applyTransaction(msg, p.config, gp, statedb, blockNumber, blockHash, tx, usedGas, vmenv)
@@ -112,8 +112,8 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 			op_gas_list[tx_op_code] = append(op_gas_list[tx_op_code], tx_op_gas_list[tx_op_code]...)
 		}
 
-		fmt.Println("\nop_count in state processor is ", op_count)
-		fmt.Println("op_time in state processor is ", op_time)
+		// fmt.Println("\nop_count in state processor is ", op_count)
+		// fmt.Println("op_time in state processor is ", op_time)
 	}
 	// Fail if Shanghai not enabled and len(withdrawals) is non-zero.
 	withdrawals := block.Withdrawals()

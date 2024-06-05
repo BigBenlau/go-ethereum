@@ -17,7 +17,6 @@
 package vm
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -266,8 +265,8 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		pc++
 	}
 
-	fmt.Println("1. show op_count map", op_count)
-	fmt.Println("2. show op_time map", op_time)
+	// fmt.Println("1. show op_count map", op_count)
+	// fmt.Println("2. show op_time map", op_time)
 
 	if err == errStopToken {
 		err = nil // clear stop token error
