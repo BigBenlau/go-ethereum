@@ -17,7 +17,6 @@
 package vm
 
 import (
-	"fmt"
 	"math/big"
 	"sync/atomic"
 
@@ -296,7 +295,7 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 		// The contract is a scoped environment for this execution context only.
 		contract := NewContract(caller, AccountRef(caller.Address()), value, gas)
 		contract.SetCallCode(&addrCopy, evm.StateDB.GetCodeHash(addrCopy), evm.StateDB.GetCode(addrCopy))
-		fmt.Println("EVM.go CallCode start Run.")
+		// fmt.Println("EVM.go CallCode start Run.")
 		ret, err, _, _, _, _ = evm.interpreter.Run(contract, input, false)
 		gas = contract.Gas
 	}
@@ -341,7 +340,7 @@ func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []by
 		// Initialise a new contract and make initialise the delegate values
 		contract := NewContract(caller, AccountRef(caller.Address()), nil, gas).AsDelegate()
 		contract.SetCallCode(&addrCopy, evm.StateDB.GetCodeHash(addrCopy), evm.StateDB.GetCode(addrCopy))
-		fmt.Println("EVM.go DelegateCall start Run.")
+		// fmt.Println("EVM.go DelegateCall start Run.")
 		ret, err, _, _, _, _ = evm.interpreter.Run(contract, input, false)
 		gas = contract.Gas
 	}
@@ -398,7 +397,7 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 		// When an error was returned by the EVM or when setting the creation code
 		// above we revert to the snapshot and consume any gas remaining. Additionally
 		// when we're in Homestead this also counts for code storage gas errors.
-		fmt.Println("EVM.go StaticCall start Run.")
+		// fmt.Println("EVM.go StaticCall start Run.")
 		ret, err, _, _, _, _ = evm.interpreter.Run(contract, input, true)
 		gas = contract.Gas
 	}
@@ -468,7 +467,7 @@ func (evm *EVM) create(caller ContractRef, codeAndHash *codeAndHash, gas uint64,
 			evm.Config.Tracer.CaptureEnter(typ, caller.Address(), address, codeAndHash.code, gas, value.ToBig())
 		}
 	}
-	fmt.Println("EVM.go create start Run.")
+	// fmt.Println("EVM.go create start Run.")
 	ret, err, _, _, _, _ := evm.interpreter.Run(contract, nil, false)
 
 	// Check whether the max code size has been exceeded, assign err if the case.
