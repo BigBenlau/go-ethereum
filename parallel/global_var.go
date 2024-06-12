@@ -8,7 +8,6 @@ var Total_op_time_map = make(map[string]int64)
 
 func Update_total_op_count_and_time(opcode string, run_time int64) {
 	_, op_ok := Total_op_count_map[opcode]
-	fmt.Println("opcode: ", opcode, "op_ok: ", op_ok)
 	if !op_ok {
 		Total_op_count_map[opcode] = 0
 		Total_op_time_map[opcode] = 0
