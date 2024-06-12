@@ -17,7 +17,7 @@ func Update_total_op_count_and_time(opcode string, run_time int64) {
 	}
 }
 
-func print_total_op_count_and_time() {
+func Print_total_op_count_and_time() {
 	for op_code, time_value_list := range Total_op_count_and_time {
 		// op_count := time_value_list["count"]
 		op_run_time := time_value_list["total_time"]
