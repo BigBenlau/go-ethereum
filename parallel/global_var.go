@@ -41,6 +41,7 @@ func Print_total_op_count_and_time() {
 				op_run_time := Total_op_time_map[op_code]
 				fmt.Println("Opcode name is: ", op_code, ". Total Run time as nanos: ", op_run_time, ". Total Count is: ", op_count)
 			}
+			break
 		}
 	}
 }
