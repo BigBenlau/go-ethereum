@@ -23,6 +23,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/ethereum/go-ethereum/parallel"
 )
 
 // Config are the configuration options for the Interpreter
@@ -168,10 +169,10 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		}()
 	}
 
-	op_count = map[string]int64{}
-	op_time = map[string]int64{}
-	op_time_list = map[string][]int64{}
-	op_gas_list = map[string][]uint64{}
+	// // op_count = map[string]int64{}
+	// // op_time = map[string]int64{}
+	// // op_time_list = map[string][]int64{}
+	// // op_gas_list = map[string][]uint64{}
 
 	// The Interpreter main run loop (contextual). This loop runs until either an
 	// explicit STOP, RETURN or SELFDESTRUCT is executed, an error occurred during
@@ -246,21 +247,23 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 
 		// go fmt.Println("Opcode name is", op_str, "Run time as nanos: ", get_duration)
 
-		op_count_value, op_count_ok := op_count[op_str]
-		op_time_value := op_time[op_str]
-		if !op_count_ok {
-			op_count[op_str] = 0
-			op_count_value = 0
-			op_time[op_str] = 0
-			op_time_value = 0
-			op_time_list[op_str] = []int64{}
-			op_gas_list[op_str] = []uint64{}
-		}
+		go parallel.Update_total_op_count_and_time(op_str, get_duration)
 
-		op_count[op_str] = op_count_value + 1
-		op_time[op_str] = op_time_value + get_duration
-		op_time_list[op_str] = append(op_time_list[op_str], get_duration)
-		op_gas_list[op_str] = append(op_gas_list[op_str], cost)
+		// op_count_value, op_count_ok := op_count[op_str]
+		// op_time_value := op_time[op_str]
+		// if !op_count_ok {
+		// 	op_count[op_str] = 0
+		// 	op_count_value = 0
+		// 	op_time[op_str] = 0
+		// 	op_time_value = 0
+		// 	op_time_list[op_str] = []int64{}
+		// 	op_gas_list[op_str] = []uint64{}
+		// }
+
+		// op_count[op_str] = op_count_value + 1
+		// op_time[op_str] = op_time_value + get_duration
+		// op_time_list[op_str] = append(op_time_list[op_str], get_duration)
+		// op_gas_list[op_str] = append(op_gas_list[op_str], cost)
 
 		if err != nil {
 			break
@@ -275,5 +278,5 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		err = nil // clear stop token error
 	}
 
-	return res, err, op_count, op_time, op_time_list, op_gas_list
+	return res, err, nil, nil, nil, nil
 }
