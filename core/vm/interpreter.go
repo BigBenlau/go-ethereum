@@ -17,6 +17,7 @@
 package vm
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -245,7 +246,7 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 
 		op_str := op.String()
 
-		// go fmt.Println("Opcode name is", op_str, "Run time as nanos: ", get_duration)
+		fmt.Println("Opcode name is", op_str, "Run time as nanos: ", get_duration)
 
 		parallel.Update_total_op_count_and_time(op_str, get_duration)
 
