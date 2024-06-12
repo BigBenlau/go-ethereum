@@ -6,6 +6,7 @@ var Total_op_count_and_time map[string]map[string]int64
 
 func Update_total_op_count_and_time(opcode string, run_time int64) {
 	_, op_ok := Total_op_count_and_time[opcode]
+	fmt.Println(op_ok)
 	if !op_ok {
 		Total_op_count_and_time[opcode] = map[string]int64{
 			"count":      1,
