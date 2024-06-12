@@ -35,8 +35,8 @@ func collect_data_from_channel() {
 }
 
 func Print_total_op_count_and_time() {
-	for op_code, _ := range Total_op_count_map {
+	for op_code, op_count := range Total_op_count_map {
 		op_run_time := Total_op_time_map[op_code]
-		fmt.Println("Opcode name is", op_code, "Run time as nanos: ", op_run_time)
+		fmt.Println("Opcode name is: ", op_code, ". Total Run time as nanos: ", op_run_time, ". Total Count is: ", op_count)
 	}
 }
