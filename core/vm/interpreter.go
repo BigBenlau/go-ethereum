@@ -247,7 +247,7 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 
 		// go fmt.Println("Opcode name is", op_str, "Run time as nanos: ", get_duration)
 
-		go parallel.Update_total_op_count_and_time(op_str, get_duration)
+		parallel.Update_total_op_count_and_time(op_str, get_duration)
 
 		// op_count_value, op_count_ok := op_count[op_str]
 		// op_time_value := op_time[op_str]

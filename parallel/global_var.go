@@ -5,7 +5,6 @@ import "fmt"
 var Total_op_count_and_time map[string]map[string]int64
 
 func Update_total_op_count_and_time(opcode string, run_time int64) {
-	fmt.Println("start update op conunt")
 	_, op_ok := Total_op_count_and_time[opcode]
 	fmt.Println(op_ok)
 	if !op_ok {
