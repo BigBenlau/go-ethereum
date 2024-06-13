@@ -239,7 +239,7 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		// execute the operation
 		start_time := time.Now()
 		op_str := op.String()
-		fmt.Println("Opcode name is", op_str)
+		fmt.Println("pc is ", pc, " .Opcode name is", op_str)
 
 		res, err = operation.execute(&pc, in, callContext)
 
