@@ -238,15 +238,13 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		}
 		// execute the operation
 		start_time := time.Now()
+		op_str := op.String()
+		fmt.Println("Opcode name is", op_str)
 
 		res, err = operation.execute(&pc, in, callContext)
 
 		end_time := time.Now()
 		get_duration := end_time.Sub(start_time).Nanoseconds()
-
-		op_str := op.String()
-
-		fmt.Println("Opcode name is", op_str, "Run time as nanos: ", get_duration)
 
 		parallel.Update_total_op_count_and_time(op_str, get_duration)
 
