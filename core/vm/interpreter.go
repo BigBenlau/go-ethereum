@@ -237,6 +237,12 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 			logged = true
 		}
 		// execute the operation
+
+		op_str := op.String()
+		if op_str != "INVALID" {
+			fmt.Println("Opcode name is", op_str)
+		}
+
 		start_time := time.Now()
 
 		res, err = operation.execute(&pc, in, callContext)
@@ -244,11 +250,7 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		end_time := time.Now()
 		get_duration := end_time.Sub(start_time).Nanoseconds()
 
-		op_str := op.String()
-
 		if op_str != "INVALID" {
-			fmt.Println("Opcode name is", op_str, "Run time as nanos: ", get_duration)
-
 			parallel.Update_total_op_count_and_time(op_str, get_duration)
 		}
 
