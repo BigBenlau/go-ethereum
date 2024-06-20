@@ -97,24 +97,14 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		// fmt.Println("\nStart transactoin. Idx: ", i, "and hash: ", tx.Hash().String())
 
 		statedb.SetTxContext(tx.Hash(), i)
-		receipt, err, tx_op_count, tx_op_time, tx_op_time_list, tx_op_gas_list := applyTransaction(msg, p.config, gp, statedb, blockNumber, blockHash, tx, usedGas, vmenv)
+		receipt, err, _, _, _, _ := applyTransaction(msg, p.config, gp, statedb, blockNumber, blockHash, tx, usedGas, vmenv)
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err), nil, nil, nil, nil
 		}
 		receipts = append(receipts, receipt)
 		allLogs = append(allLogs, receipt.Logs...)
-
-		for tx_op_code, tx_op_count := range tx_op_count {
-			tx_op_time := tx_op_time[tx_op_code]
-			op_count[tx_op_code] += tx_op_count
-			op_time[tx_op_code] += tx_op_time
-			op_time_list[tx_op_code] = append(op_time_list[tx_op_code], tx_op_time_list[tx_op_code]...)
-			op_gas_list[tx_op_code] = append(op_gas_list[tx_op_code], tx_op_gas_list[tx_op_code]...)
-		}
-
-		// fmt.Println("\nop_count in state processor is ", op_count)
-		// fmt.Println("op_time in state processor is ", op_time)
 	}
+
 	// Fail if Shanghai not enabled and len(withdrawals) is non-zero.
 	withdrawals := block.Withdrawals()
 	if len(withdrawals) > 0 && !p.config.IsShanghai(block.Number(), block.Time()) {
