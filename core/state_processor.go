@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
@@ -89,7 +90,11 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 
 	// Iterate over and process the individual transactions
 	for i, tx := range block.Transactions() {
+		start_time_1 := time.Now()
 		msg, err := TransactionToMessage(tx, signer, header.BaseFee)
+		end_time_1 := time.Now()
+		get_duration_1 := end_time_1.Sub(start_time_1).Nanoseconds()
+		fmt.Println("TransactionToMessage Time is", get_duration_1)
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err), nil, nil, nil, nil
 		}
@@ -97,7 +102,12 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		// fmt.Println("\nStart transactoin. Idx: ", i, "and hash: ", tx.Hash().String())
 
 		statedb.SetTxContext(tx.Hash(), i)
+
+		start_time_2 := time.Now()
 		receipt, err, _, _, _, _ := applyTransaction(msg, p.config, gp, statedb, blockNumber, blockHash, tx, usedGas, vmenv)
+		end_time_2 := time.Now()
+		get_duration_2 := end_time_2.Sub(start_time_2).Nanoseconds()
+		fmt.Println("applyTransaction Time is", get_duration_2)
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err), nil, nil, nil, nil
 		}
