@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	cmath "github.com/ethereum/go-ethereum/common/math"
@@ -376,6 +377,7 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error, map[string]i
 	// 6. caller has enough balance to cover asset transfer for **topmost** call
 
 	// Check clauses 1-3, buy gas if everything is correct
+	start_time_1 := time.Now()
 	if err := st.preCheck(); err != nil {
 		return nil, err, nil, nil, nil, nil
 	}
@@ -393,8 +395,12 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error, map[string]i
 		rules            = st.evm.ChainConfig().Rules(st.evm.Context.BlockNumber, st.evm.Context.Random != nil, st.evm.Context.Time)
 		contractCreation = msg.To == nil
 	)
+	end_time_1 := time.Now()
+	get_duration_1 := end_time_1.Sub(start_time_1).Nanoseconds()
+	fmt.Println("Check clauses 1-3 time is", get_duration_1)
 
 	// Check clauses 4-5, subtract intrinsic gas if everything is correct
+	start_time_2 := time.Now()
 	gas, err := IntrinsicGas(msg.Data, msg.AccessList, contractCreation, rules.IsHomestead, rules.IsIstanbul, rules.IsShanghai)
 	if err != nil {
 		return nil, err, nil, nil, nil, nil
@@ -403,9 +409,16 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error, map[string]i
 		return nil, fmt.Errorf("%w: have %d, want %d", ErrIntrinsicGas, st.gasRemaining, gas), nil, nil, nil, nil
 	}
 	st.gasRemaining -= gas
+	end_time_2 := time.Now()
+	get_duration_2 := end_time_2.Sub(start_time_2).Nanoseconds()
+	fmt.Println("Check clauses 4-5 time is", get_duration_2)
 
 	// Check clause 6
+	start_time_3 := time.Now()
 	value, overflow := uint256.FromBig(msg.Value)
+	end_time_3 := time.Now()
+	get_duration_3 := end_time_3.Sub(start_time_3).Nanoseconds()
+	fmt.Println("Check clause 6 Time is", get_duration_3)
 	if overflow {
 		return nil, fmt.Errorf("%w: address %v", ErrInsufficientFundsForTransfer, msg.From.Hex()), nil, nil, nil, nil
 	}
@@ -421,7 +434,11 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error, map[string]i
 	// Execute the preparatory steps for state transition which includes:
 	// - prepare accessList(post-berlin)
 	// - reset transient storage(eip 1153)
+	start_time_4 := time.Now()
 	st.state.Prepare(rules, msg.From, st.evm.Context.Coinbase, msg.To, vm.ActivePrecompiles(rules), msg.AccessList)
+	end_time_4 := time.Now()
+	get_duration_4 := end_time_4.Sub(start_time_4).Nanoseconds()
+	fmt.Println("Prepare Time is", get_duration_4)
 
 	var (
 		ret          []byte
@@ -432,13 +449,22 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error, map[string]i
 		op_gas_list  map[string][]uint64
 	)
 	if contractCreation {
+		start_time_5 := time.Now()
 		ret, _, st.gasRemaining, vmerr = st.evm.Create(sender, msg.Data, st.gasRemaining, value)
+		end_time_5 := time.Now()
+		get_duration_5 := end_time_5.Sub(start_time_5).Nanoseconds()
+		fmt.Println("Create Time is", get_duration_5)
 	} else {
 		// Increment the nonce for the next transaction
+		start_time_6 := time.Now()
 		st.state.SetNonce(msg.From, st.state.GetNonce(sender.Address())+1)
 		ret, st.gasRemaining, vmerr, op_count, op_time, op_time_list, op_gas_list = st.evm.Call(sender, st.to(), msg.Data, st.gasRemaining, value)
+		end_time_6 := time.Now()
+		get_duration_6 := end_time_6.Sub(start_time_6).Nanoseconds()
+		fmt.Println("Call Time is", get_duration_6)
 	}
 
+	start_time_7 := time.Now()
 	var gasRefund uint64
 	if !rules.IsLondon {
 		// Before EIP-3529: refunds were capped to gasUsed / 2
@@ -462,6 +488,9 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error, map[string]i
 		fee.Mul(fee, effectiveTipU256)
 		st.state.AddBalance(st.evm.Context.Coinbase, fee)
 	}
+	end_time_7 := time.Now()
+	get_duration_7 := end_time_7.Sub(start_time_7).Nanoseconds()
+	fmt.Println("After Call Time is", get_duration_7)
 
 	return &ExecutionResult{
 		UsedGas:     st.gasUsed(),
