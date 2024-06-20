@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
@@ -58,6 +59,7 @@ func NewStateProcessor(config *params.ChainConfig, bc *BlockChain, engine consen
 // returns the amount of gas that was used in the process. If any of the
 // transactions failed to execute due to insufficient gas it will return an error.
 func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg vm.Config) (types.Receipts, []*types.Log, uint64, error, map[string]int64, map[string]int64, map[string][]int64, map[string][]uint64) {
+	start_time_1 := time.Now()
 	var (
 		receipts    types.Receipts
 		usedGas     = new(uint64)
@@ -87,8 +89,14 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		op_gas_list  = map[string][]uint64{}
 	)
 
+	end_time_1 := time.Now()
+	get_duration_1 := end_time_1.Sub(start_time_1).Nanoseconds()
+	fmt.Println("Duration 1 is", get_duration_1)
+
 	// Iterate over and process the individual transactions
 	for i, tx := range block.Transactions() {
+		start_time_2 := time.Now()
+
 		msg, err := TransactionToMessage(tx, signer, header.BaseFee)
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err), nil, nil, nil, nil
@@ -112,9 +120,15 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 			op_gas_list[tx_op_code] = append(op_gas_list[tx_op_code], tx_op_gas_list[tx_op_code]...)
 		}
 
+		end_time_2 := time.Now()
+		get_duration_2 := end_time_2.Sub(start_time_2).Nanoseconds()
+		fmt.Println("Tx idx is ", i, "Duration tx is", get_duration_2)
+
 		// fmt.Println("\nop_count in state processor is ", op_count)
 		// fmt.Println("op_time in state processor is ", op_time)
 	}
+
+	start_time_3 := time.Now()
 	// Fail if Shanghai not enabled and len(withdrawals) is non-zero.
 	withdrawals := block.Withdrawals()
 	if len(withdrawals) > 0 && !p.config.IsShanghai(block.Number(), block.Time()) {
@@ -122,6 +136,10 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	}
 	// Finalize the block, applying any consensus engine specific extras (e.g. block rewards)
 	p.engine.Finalize(p.bc, header, statedb, block.Transactions(), block.Uncles(), withdrawals)
+
+	end_time_3 := time.Now()
+	get_duration_3 := end_time_3.Sub(start_time_3).Nanoseconds()
+	fmt.Println("Duration tx is", get_duration_3)
 
 	return receipts, allLogs, *usedGas, nil, op_count, op_time, op_time_list, op_gas_list
 }
