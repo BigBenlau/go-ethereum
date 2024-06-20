@@ -19,6 +19,7 @@ package params
 import (
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/params/forks"
@@ -906,13 +907,14 @@ type Rules struct {
 
 // Rules ensures c's ChainID is not nil.
 func (c *ChainConfig) Rules(num *big.Int, isMerge bool, timestamp uint64) Rules {
+	start_time_1 := time.Now()
 	chainID := c.ChainID
 	if chainID == nil {
 		chainID = new(big.Int)
 	}
 	// disallow setting Merge out of order
 	isMerge = isMerge && c.IsLondon(num)
-	return Rules{
+	test_a := Rules{
 		ChainID:          new(big.Int).Set(chainID),
 		IsHomestead:      c.IsHomestead(num),
 		IsEIP150:         c.IsEIP150(num),
@@ -930,4 +932,8 @@ func (c *ChainConfig) Rules(num *big.Int, isMerge bool, timestamp uint64) Rules 
 		IsPrague:         isMerge && c.IsPrague(num, timestamp),
 		IsVerkle:         isMerge && c.IsVerkle(num, timestamp),
 	}
+	end_time_1 := time.Now()
+	get_duration_1 := end_time_1.Sub(start_time_1).Nanoseconds()
+	fmt.Println("Check clauses 1-3 Rules time is", get_duration_1)
+	return test_a
 }

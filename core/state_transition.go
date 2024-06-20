@@ -377,17 +377,20 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error, map[string]i
 	// 6. caller has enough balance to cover asset transfer for **topmost** call
 
 	// Check clauses 1-3, buy gas if everything is correct
-	start_time_1 := time.Now()
 	if err := st.preCheck(); err != nil {
 		return nil, err, nil, nil, nil, nil
 	}
 
+	start_time_1_1 := time.Now()
 	if tracer := st.evm.Config.Tracer; tracer != nil {
 		tracer.CaptureTxStart(st.initialGas)
 		defer func() {
 			tracer.CaptureTxEnd(st.gasRemaining)
 		}()
 	}
+	end_time_1_1 := time.Now()
+	get_duration_1_1 := end_time_1_1.Sub(start_time_1_1).Nanoseconds()
+	fmt.Println("Check clauses 1-3 tracer time is", get_duration_1_1)
 
 	var (
 		msg              = st.msg
@@ -395,9 +398,6 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error, map[string]i
 		rules            = st.evm.ChainConfig().Rules(st.evm.Context.BlockNumber, st.evm.Context.Random != nil, st.evm.Context.Time)
 		contractCreation = msg.To == nil
 	)
-	end_time_1 := time.Now()
-	get_duration_1 := end_time_1.Sub(start_time_1).Nanoseconds()
-	fmt.Println("Check clauses 1-3 time is", get_duration_1)
 
 	// Check clauses 4-5, subtract intrinsic gas if everything is correct
 	start_time_2 := time.Now()
