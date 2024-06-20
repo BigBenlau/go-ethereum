@@ -381,6 +381,9 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error, map[string]i
 	if err := st.preCheck(); err != nil {
 		return nil, err, nil, nil, nil, nil
 	}
+	end_time_1 := time.Now()
+	get_duration_1 := end_time_1.Sub(start_time_1).Nanoseconds()
+	fmt.Println("Check clauses 1-3 st.preCheck time is", get_duration_1)
 
 	if tracer := st.evm.Config.Tracer; tracer != nil {
 		tracer.CaptureTxStart(st.initialGas)
@@ -395,9 +398,6 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error, map[string]i
 		rules            = st.evm.ChainConfig().Rules(st.evm.Context.BlockNumber, st.evm.Context.Random != nil, st.evm.Context.Time)
 		contractCreation = msg.To == nil
 	)
-	end_time_1 := time.Now()
-	get_duration_1 := end_time_1.Sub(start_time_1).Nanoseconds()
-	fmt.Println("Check clauses 1-3 time is", get_duration_1)
 
 	// Check clauses 4-5, subtract intrinsic gas if everything is correct
 	start_time_2 := time.Now()
@@ -473,12 +473,20 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error, map[string]i
 		// After EIP-3529: refunds are capped to gasUsed / 5
 		gasRefund = st.refundGas(params.RefundQuotientEIP3529)
 	}
+	end_time_7 := time.Now()
+	get_duration_7 := end_time_7.Sub(start_time_7).Nanoseconds()
+	fmt.Println("After Call gasRefund Time is", get_duration_7)
+	start_time_8 := time.Now()
 	effectiveTip := msg.GasPrice
 	if rules.IsLondon {
 		effectiveTip = cmath.BigMin(msg.GasTipCap, new(big.Int).Sub(msg.GasFeeCap, st.evm.Context.BaseFee))
 	}
 	effectiveTipU256, _ := uint256.FromBig(effectiveTip)
+	end_time_8 := time.Now()
+	get_duration_8 := end_time_8.Sub(start_time_8).Nanoseconds()
+	fmt.Println("After Call effectiveTip Time is", get_duration_8)
 
+	start_time_9 := time.Now()
 	if st.evm.Config.NoBaseFee && msg.GasFeeCap.Sign() == 0 && msg.GasTipCap.Sign() == 0 {
 		// Skip fee payment when NoBaseFee is set and the fee fields
 		// are 0. This avoids a negative effectiveTip being applied to
@@ -488,9 +496,9 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error, map[string]i
 		fee.Mul(fee, effectiveTipU256)
 		st.state.AddBalance(st.evm.Context.Coinbase, fee)
 	}
-	end_time_7 := time.Now()
-	get_duration_7 := end_time_7.Sub(start_time_7).Nanoseconds()
-	fmt.Println("After Call Time is", get_duration_7)
+	end_time_9 := time.Now()
+	get_duration_9 := end_time_9.Sub(start_time_9).Nanoseconds()
+	fmt.Println("After Call Sign Time is", get_duration_9)
 
 	return &ExecutionResult{
 		UsedGas:     st.gasUsed(),
