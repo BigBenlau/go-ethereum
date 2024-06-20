@@ -17,7 +17,6 @@
 package vm
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -239,9 +238,11 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		// execute the operation
 
 		op_str := op.String()
-		if op_str != "INVALID" {
-			fmt.Println("Opcode name is", op_str)
-		}
+
+		// // For print opcode order, print before execution.
+		// if op_str != "INVALID" {
+		// 	fmt.Println("Opcode name is", op_str)
+		// }
 
 		start_time := time.Now()
 
@@ -251,33 +252,14 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		get_duration := end_time.Sub(start_time).Nanoseconds()
 
 		if op_str != "INVALID" {
-			parallel.Update_total_op_count_and_time(op_str, get_duration)
+			go parallel.Update_total_op_count_and_time(op_str, get_duration)
 		}
-
-		// op_count_value, op_count_ok := op_count[op_str]
-		// op_time_value := op_time[op_str]
-		// if !op_count_ok {
-		// 	op_count[op_str] = 0
-		// 	op_count_value = 0
-		// 	op_time[op_str] = 0
-		// 	op_time_value = 0
-		// 	op_time_list[op_str] = []int64{}
-		// 	op_gas_list[op_str] = []uint64{}
-		// }
-
-		// op_count[op_str] = op_count_value + 1
-		// op_time[op_str] = op_time_value + get_duration
-		// op_time_list[op_str] = append(op_time_list[op_str], get_duration)
-		// op_gas_list[op_str] = append(op_gas_list[op_str], cost)
 
 		if err != nil {
 			break
 		}
 		pc++
 	}
-
-	// fmt.Println("1. show op_count map", op_count)
-	// fmt.Println("2. show op_time map", op_time)
 
 	if err == errStopToken {
 		err = nil // clear stop token error
