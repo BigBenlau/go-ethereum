@@ -17,13 +17,10 @@
 package vm
 
 import (
-	"time"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/parallel"
 )
 
 // Config are the configuration options for the Interpreter
@@ -237,23 +234,23 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		}
 		// execute the operation
 
-		op_str := op.String()
+		// op_str := op.String()
 
 		// // For print opcode order, print before execution.
 		// if op_str != "INVALID" {
 		// 	fmt.Println("Opcode name is", op_str)
 		// }
 
-		start_time := time.Now()
+		// start_time := time.Now()
 
 		res, err = operation.execute(&pc, in, callContext)
 
-		end_time := time.Now()
-		get_duration := end_time.Sub(start_time).Nanoseconds()
+		// end_time := time.Now()
+		// get_duration := end_time.Sub(start_time).Nanoseconds()
 
-		if op_str != "INVALID" {
-			go parallel.Update_total_op_count_and_time(op_str, get_duration)
-		}
+		// if op_str != "INVALID" {
+		// 	go parallel.Update_total_op_count_and_time(op_str, get_duration)
+		// }
 
 		if err != nil {
 			break
