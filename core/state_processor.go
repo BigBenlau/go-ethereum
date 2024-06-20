@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
@@ -118,6 +119,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 
 func applyTransaction(msg *Message, config *params.ChainConfig, gp *GasPool, statedb *state.StateDB, blockNumber *big.Int, blockHash common.Hash, tx *types.Transaction, usedGas *uint64, evm *vm.EVM) (*types.Receipt, error, map[string]int64, map[string]int64, map[string][]int64, map[string][]uint64) {
 	// Create a new context to be used in the EVM environment.
+	start_time_1 := time.Now()
 	txContext := NewEVMTxContext(msg)
 	evm.Reset(txContext, statedb)
 
@@ -127,13 +129,20 @@ func applyTransaction(msg *Message, config *params.ChainConfig, gp *GasPool, sta
 		op_time_list map[string][]int64
 		op_gas_list  map[string][]uint64
 	)
+	end_time_1 := time.Now()
+	get_duration_1 := end_time_1.Sub(start_time_1).Nanoseconds()
+	fmt.Println("Before ApplyMessage Time is", get_duration_1)
 
 	// Apply the transaction to the current state (included in the env).
+	start_time_2 := time.Now()
 	result, err, op_count, op_time, op_time_list, op_gas_list := ApplyMessage(evm, msg, gp)
+	end_time_2 := time.Now()
+	get_duration_2 := end_time_2.Sub(start_time_2).Nanoseconds()
+	fmt.Println("ApplyMessage Time is", get_duration_2)
 	if err != nil {
 		return nil, err, nil, nil, nil, nil
 	}
-
+	start_time_3 := time.Now()
 	// Update the state with pending changes.
 	var root []byte
 	if config.IsByzantium(blockNumber) {
@@ -170,6 +179,9 @@ func applyTransaction(msg *Message, config *params.ChainConfig, gp *GasPool, sta
 	receipt.BlockHash = blockHash
 	receipt.BlockNumber = blockNumber
 	receipt.TransactionIndex = uint(statedb.TxIndex())
+	end_time_3 := time.Now()
+	get_duration_3 := end_time_3.Sub(start_time_3).Nanoseconds()
+	fmt.Println("ApplyMessage Time is", get_duration_3)
 	return receipt, err, op_count, op_time, op_time_list, op_gas_list
 }
 
