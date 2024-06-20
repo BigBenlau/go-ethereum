@@ -377,7 +377,6 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error, map[string]i
 	// 6. caller has enough balance to cover asset transfer for **topmost** call
 
 	// Check clauses 1-3, buy gas if everything is correct
-	start_time_1 := time.Now()
 	if err := st.preCheck(); err != nil {
 		return nil, err, nil, nil, nil, nil
 	}
@@ -389,15 +388,35 @@ func (st *StateTransition) TransitionDb() (*ExecutionResult, error, map[string]i
 		}()
 	}
 
+	start_time_1_1 := time.Now()
+	msg := st.msg
+	end_time_1_1 := time.Now()
+	get_duration_1_1 := end_time_1_1.Sub(start_time_1_1).Nanoseconds()
+	fmt.Println("Check clauses 1-3 get msg time is", get_duration_1_1)
+
+	start_time_1_2 := time.Now()
+	sender := vm.AccountRef(msg.From)
+	end_time_1_2 := time.Now()
+	get_duration_1_2 := end_time_1_2.Sub(start_time_1_2).Nanoseconds()
+	fmt.Println("Check clauses 1-3 get sender time is", get_duration_1_2)
+
+	start_time_1_3 := time.Now()
+	rules := st.evm.ChainConfig().Rules(st.evm.Context.BlockNumber, st.evm.Context.Random != nil, st.evm.Context.Time)
+	end_time_1_3 := time.Now()
+	get_duration_1_3 := end_time_1_3.Sub(start_time_1_3).Nanoseconds()
+	fmt.Println("Check clauses 1-3 get rules time is", get_duration_1_3)
+
+	start_time_1_4 := time.Now()
+	contractCreation := msg.To == nil
+	end_time_1_4 := time.Now()
+	get_duration_1_4 := end_time_1_4.Sub(start_time_1_4).Nanoseconds()
+	fmt.Println("Check clauses 1-3 get sender time is", get_duration_1_4)
 	var (
-		msg              = st.msg
-		sender           = vm.AccountRef(msg.From)
-		rules            = st.evm.ChainConfig().Rules(st.evm.Context.BlockNumber, st.evm.Context.Random != nil, st.evm.Context.Time)
-		contractCreation = msg.To == nil
+	// msg              = msg_temp
+	// sender           = vm.AccountRef(msg.From)
+	// rules            = st.evm.ChainConfig().Rules(st.evm.Context.BlockNumber, st.evm.Context.Random != nil, st.evm.Context.Time)
+	// contractCreation = msg.To == nil
 	)
-	end_time_1 := time.Now()
-	get_duration_1 := end_time_1.Sub(start_time_1).Nanoseconds()
-	fmt.Println("Check clauses 1-3 time is", get_duration_1)
 
 	// Check clauses 4-5, subtract intrinsic gas if everything is correct
 	start_time_2 := time.Now()
