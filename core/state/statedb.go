@@ -344,7 +344,6 @@ func (s *StateDB) GetState(addr common.Address, hash common.Hash) common.Hash {
 	end_time_1 := time.Now()
 	get_duration_1 := end_time_1.Sub(start_time_1).Nanoseconds()
 	fmt.Println("GetState getStateObject() time is", get_duration_1)
-	fmt.Println("Print state object:", stateObject)
 
 	if stateObject != nil {
 		start_time_2 := time.Now()
