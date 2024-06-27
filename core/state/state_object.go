@@ -173,9 +173,11 @@ func (s *stateObject) GetState(key common.Hash) common.Hash {
 // GetCommittedState retrieves a value from the committed account storage trie.
 func (s *stateObject) GetCommittedState(key common.Hash) common.Hash {
 	// If we have a pending write or clean cached, return that
+	fmt.Println("start check pendingStorage.")
 	if value, pending := s.pendingStorage[key]; pending {
 		return value
 	}
+	fmt.Println("start check originStorage.")
 	if value, cached := s.originStorage[key]; cached {
 		return value
 	}
@@ -189,6 +191,7 @@ func (s *stateObject) GetCommittedState(key common.Hash) common.Hash {
 		return common.Hash{}
 	}
 	// If no live objects are available, attempt to use snapshots
+	fmt.Println("start check from snapshot.")
 	var (
 		enc   []byte
 		err   error
@@ -209,6 +212,7 @@ func (s *stateObject) GetCommittedState(key common.Hash) common.Hash {
 		}
 	}
 	// If the snapshot is unavailable or reading from it fails, load from the database.
+	fmt.Println("start check from db.")
 	if s.db.snap == nil || err != nil {
 		start := time.Now()
 		tr, err := s.getTrie()
