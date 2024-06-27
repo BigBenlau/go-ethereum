@@ -339,10 +339,20 @@ func (s *StateDB) GetCodeHash(addr common.Address) common.Hash {
 
 // GetState retrieves a value from the given account's storage trie.
 func (s *StateDB) GetState(addr common.Address, hash common.Hash) common.Hash {
+	start_time_1 := time.Now()
 	stateObject := s.getStateObject(addr)
+	end_time_1 := time.Now()
+	get_duration_1 := end_time_1.Sub(start_time_1).Nanoseconds()
+	fmt.Println("GetState getStateObject() time is", get_duration_1)
+
+	start_time_2 := time.Now()
 	if stateObject != nil {
 		return stateObject.GetState(hash)
 	}
+	end_time_2 := time.Now()
+	get_duration_2 := end_time_2.Sub(start_time_2).Nanoseconds()
+	fmt.Println("GetState GetState() time is", get_duration_2)
+
 	return common.Hash{}
 }
 
