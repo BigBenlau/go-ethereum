@@ -195,7 +195,6 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 		} else if sLen > operation.maxStack {
 			return nil, &ErrStackOverflow{stackLen: sLen, limit: operation.maxStack}, nil, nil, nil, nil
 		}
-		fmt.Println(contract.Gas)
 		if !contract.UseGas(cost) {
 			return nil, ErrOutOfGas, nil, nil, nil, nil
 		}
@@ -221,7 +220,6 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 			// cost is explicitly set so that the capture state defer method can get the proper cost
 			var dynamicCost uint64
 			dynamicCost, err = operation.dynamicGas(in.evm, contract, stack, mem, memorySize)
-			fmt.Println("dynamicCost is:", dynamicCost)
 			cost += dynamicCost // for tracing
 			if err != nil || !contract.UseGas(dynamicCost) {
 				return nil, ErrOutOfGas, nil, nil, nil, nil
@@ -239,13 +237,13 @@ func (in *EVMInterpreter) Run(contract *Contract, input []byte, readOnly bool) (
 			logged = true
 		}
 		// execute the operation
-		fmt.Println(contract.Gas)
 		op_str := op.String()
 
 		// // For print opcode order, print before execution.
-		// if op_str != "INVALID" {
-		// 	fmt.Println("Opcode name is", op_str)
-		// }
+		if op_str != "INVALID" {
+			fmt.Println("Opcode name is", op_str)
+			fmt.Println("Remain Gas:", contract.Gas)
+		}
 
 		start_time := time.Now()
 
