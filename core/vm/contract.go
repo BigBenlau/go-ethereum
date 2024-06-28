@@ -17,6 +17,8 @@
 package vm
 
 import (
+	"fmt"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/holiman/uint256"
 )
@@ -73,6 +75,7 @@ func NewContract(caller ContractRef, object ContractRef, value *uint256.Int, gas
 
 	// Gas should be a pointer so it can safely be reduced through the run
 	// This pointer will be off the state transition
+	fmt.Println("Create contract input gas:", gas)
 	c.Gas = gas
 	// ensures a value is set
 	c.value = value
