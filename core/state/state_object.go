@@ -221,15 +221,15 @@ func (s *stateObject) GetCommittedState(key common.Hash) common.Hash {
 			return common.Hash{}
 		}
 		get_trie_time := time.Since(start).Nanoseconds()
-		fmt.Println("print get trie time", get_trie_time)
+		fmt.Println("print get trie time(ns)", get_trie_time)
 
 		start2 := time.Now()
 		val, err := tr.GetStorage(s.address, key.Bytes())
 		if metrics.EnabledExpensive {
 			s.db.StorageReads += time.Since(start)
 		}
-		get_storage_time := time.Since(start2)
-		fmt.Println("print get storage time", get_storage_time)
+		get_storage_time := time.Since(start2).Nanoseconds()
+		fmt.Println("print get storage time(ns)", get_storage_time)
 
 		if err != nil {
 			s.db.setError(err)
