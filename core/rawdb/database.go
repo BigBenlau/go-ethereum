@@ -376,12 +376,14 @@ type OpenOptions struct {
 //	db is existent     |  from db         |  specified type (if compatible)
 func openKeyValueDatabase(o OpenOptions) (ethdb.Database, error) {
 	// Reject any unsupported database type
+	fmt.Println("o.Type is:", o.Type)
 	if len(o.Type) != 0 && o.Type != dbLeveldb && o.Type != dbPebble {
 		return nil, fmt.Errorf("unknown db.engine %v", o.Type)
 	}
 	// Retrieve any pre-existing database's type and use that or the requested one
 	// as long as there's no conflict between the two types
 	existingDb := PreexistingDatabase(o.Directory)
+	fmt.Println("show existing db is", existingDb)
 	if len(existingDb) != 0 && len(o.Type) != 0 && o.Type != existingDb {
 		return nil, fmt.Errorf("db.engine choice was %v but found pre-existing %v database in specified data directory", o.Type, existingDb)
 	}
