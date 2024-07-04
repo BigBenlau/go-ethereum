@@ -191,7 +191,10 @@ func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, newnode no
 		return value, n, didResolve, err
 	case hashNode:
 		fmt.Println("Start hashNode.")
+		start_hash1 := time.Now()
 		child, err := t.resolveAndTrack(n, key[:pos])
+		dur_hash1 := time.Since(start_hash1).Nanoseconds()
+		fmt.Println("print hashNode resolveAndTrack time: ", dur_hash1)
 		if err != nil {
 			return nil, n, true, err
 		}
