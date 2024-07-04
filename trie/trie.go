@@ -157,7 +157,7 @@ func (t *Trie) Get(key []byte) ([]byte, error) {
 func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, newnode node, didResolve bool, err error) {
 	switch n := (origNode).(type) {
 	case nil:
-		fmt.Println("Get nil.")
+		fmt.Println("Trie Get nil!!")
 		return nil, nil, false, nil
 	case valueNode:
 		fmt.Println("Get valueNode.")
