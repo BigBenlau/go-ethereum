@@ -157,6 +157,7 @@ func (t *Trie) Get(key []byte) ([]byte, error) {
 func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, newnode node, didResolve bool, err error) {
 	switch n := (origNode).(type) {
 	case nil:
+		fmt.Println("Get nil.")
 		return nil, nil, false, nil
 	case valueNode:
 		fmt.Println("Get valueNode.")
@@ -164,6 +165,7 @@ func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, newnode no
 	case *shortNode:
 		if len(key)-pos < len(n.Key) || !bytes.Equal(n.Key, key[pos:pos+len(n.Key)]) {
 			// key not found in trie
+			fmt.Println("Short Node not found!!")
 			return nil, n, false, nil
 		}
 		fmt.Println("Start shortNode.")
