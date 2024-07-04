@@ -159,12 +159,14 @@ func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, newnode no
 	case nil:
 		return nil, nil, false, nil
 	case valueNode:
+		fmt.Println("Get valueNode.")
 		return n, n, false, nil
 	case *shortNode:
 		if len(key)-pos < len(n.Key) || !bytes.Equal(n.Key, key[pos:pos+len(n.Key)]) {
 			// key not found in trie
 			return nil, n, false, nil
 		}
+		fmt.Println("Start shortNode.")
 		start := time.Now()
 		value, newnode, didResolve, err = t.get(n.Val, key, pos+len(n.Key))
 		dur := time.Since(start).Nanoseconds()
@@ -175,6 +177,7 @@ func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, newnode no
 		}
 		return value, n, didResolve, err
 	case *fullNode:
+		fmt.Println("Start fullNode.")
 		start := time.Now()
 		value, newnode, didResolve, err = t.get(n.Children[key[pos]], key, pos+1)
 		dur := time.Since(start).Nanoseconds()
@@ -185,6 +188,7 @@ func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, newnode no
 		}
 		return value, n, didResolve, err
 	case hashNode:
+		fmt.Println("Start hashNode.")
 		child, err := t.resolveAndTrack(n, key[:pos])
 		if err != nil {
 			return nil, n, true, err
