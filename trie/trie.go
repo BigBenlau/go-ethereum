@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -164,14 +165,20 @@ func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, newnode no
 			// key not found in trie
 			return nil, n, false, nil
 		}
+		start := time.Now()
 		value, newnode, didResolve, err = t.get(n.Val, key, pos+len(n.Key))
+		dur := time.Since(start).Nanoseconds()
+		fmt.Println("print shortNode get time: ", dur)
 		if err == nil && didResolve {
 			n = n.copy()
 			n.Val = newnode
 		}
 		return value, n, didResolve, err
 	case *fullNode:
+		start := time.Now()
 		value, newnode, didResolve, err = t.get(n.Children[key[pos]], key, pos+1)
+		dur := time.Since(start).Nanoseconds()
+		fmt.Println("print fullNode get time: ", dur)
 		if err == nil && didResolve {
 			n = n.copy()
 			n.Children[key[pos]] = newnode
@@ -182,7 +189,10 @@ func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, newnode no
 		if err != nil {
 			return nil, n, true, err
 		}
+		start := time.Now()
 		value, newnode, _, err := t.get(child, key, pos)
+		dur := time.Since(start).Nanoseconds()
+		fmt.Println("print hashNode get time: ", dur)
 		return value, newnode, true, err
 	default:
 		panic(fmt.Sprintf("%T: invalid node: %v", origNode, origNode))
