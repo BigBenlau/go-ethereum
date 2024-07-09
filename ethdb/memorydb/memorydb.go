@@ -19,9 +19,11 @@ package memorydb
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethdb"
@@ -95,7 +97,10 @@ func (db *Database) Get(key []byte) ([]byte, error) {
 	if db.db == nil {
 		return nil, errMemorydbClosed
 	}
+	start := time.Now()
 	if entry, ok := db.db[string(key)]; ok {
+		dur := time.Since(start).Nanoseconds()
+		fmt.Println("print memory db time:", dur)
 		return common.CopyBytes(entry), nil
 	}
 	return nil, errMemorydbNotFound

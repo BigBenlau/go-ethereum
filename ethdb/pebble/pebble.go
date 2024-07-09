@@ -295,7 +295,10 @@ func (d *Database) Get(key []byte) ([]byte, error) {
 	if d.closed {
 		return nil, pebble.ErrClosed
 	}
+	start := time.Now()
 	dat, closer, err := d.db.Get(key)
+	dur := time.Since(start).Nanoseconds()
+	fmt.Println("print pebble db time:", dur)
 	if err != nil {
 		return nil, err
 	}
