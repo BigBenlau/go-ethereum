@@ -91,6 +91,7 @@ func (t *StateTrie) MustGet(key []byte) []byte {
 // If a trie node is not found in the database, a MissingNodeError is returned.
 func (t *StateTrie) GetStorage(_ common.Address, key []byte) ([]byte, error) {
 	start := time.Now()
+	fmt.Println("Get Storage Key is: ", key, "and hashkey is: ", t.hashKey((key)))
 	enc, err := t.trie.Get(t.hashKey(key))
 	dur := time.Since(start).Nanoseconds()
 	fmt.Println("print secure_trie: ", dur)
