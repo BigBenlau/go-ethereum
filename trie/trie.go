@@ -160,7 +160,7 @@ func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, newnode no
 		fmt.Println("Trie Get nil!!")
 		return nil, nil, false, nil
 	case valueNode:
-		fmt.Println("Get valueNode.")
+		fmt.Println("Get valueNode. Print node:", n.fstring(""))
 		return n, n, false, nil
 	case *shortNode:
 		if len(key)-pos < len(n.Key) || !bytes.Equal(n.Key, key[pos:pos+len(n.Key)]) {
@@ -168,7 +168,7 @@ func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, newnode no
 			fmt.Println("Short Node not found!!")
 			return nil, n, false, nil
 		}
-		fmt.Println("Start shortNode. Print key:", key, "pos: ", pos, "pos+len(n.Key): ", pos+len(n.Key))
+		fmt.Println("Start shortNode. Print node:", n.fstring(""), "key: ", key, "pos: ", pos, "pos+len(n.Key): ", pos+len(n.Key))
 		start := time.Now()
 		value, newnode, didResolve, err = t.get(n.Val, key, pos+len(n.Key))
 		dur := time.Since(start).Nanoseconds()
@@ -179,7 +179,7 @@ func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, newnode no
 		}
 		return value, n, didResolve, err
 	case *fullNode:
-		fmt.Println("Start fullNode. Print key: ", key, "key[pos]: ", key[pos], "pos+1", pos+1)
+		fmt.Println("Start fullNode. Print node:", n.fstring(""), "key: ", key, "key[pos]: ", key[pos], "pos+1", pos+1)
 		start := time.Now()
 		value, newnode, didResolve, err = t.get(n.Children[key[pos]], key, pos+1)
 		dur := time.Since(start).Nanoseconds()
@@ -190,7 +190,7 @@ func (t *Trie) get(origNode node, key []byte, pos int) (value []byte, newnode no
 		}
 		return value, n, didResolve, err
 	case hashNode:
-		fmt.Println("Start hashNode. Print key: ", key, "key[:pos]:", key[:pos], "pos: ", pos)
+		fmt.Println("Start hashNode. Print node:", n.fstring(""), "key: ", key, "key[:pos]:", key[:pos], "pos: ", pos)
 		start_hash1 := time.Now()
 		child, err := t.resolveAndTrack(n, key[:pos])
 		dur_hash1 := time.Since(start_hash1).Nanoseconds()
