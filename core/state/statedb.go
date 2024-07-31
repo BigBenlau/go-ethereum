@@ -346,6 +346,7 @@ func (s *StateDB) GetState(addr common.Address, hash common.Hash) common.Hash {
 	fmt.Println("GetState getStateObject() time is", get_duration_1)
 
 	if stateObject != nil {
+		fmt.Println("Start GetState(). Search key is: ", hash.String())
 		start_time_2 := time.Now()
 		result_hash := stateObject.GetState(hash)
 		end_time_2 := time.Now()
