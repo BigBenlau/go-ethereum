@@ -2459,3 +2459,7 @@ func (bc *BlockChain) SetTrieFlushInterval(interval time.Duration) {
 func (bc *BlockChain) GetTrieFlushInterval() time.Duration {
 	return time.Duration(bc.flushInterval.Load())
 }
+
+func (bc *BlockChain) RunPrefetcherBen(follow_block *types.Block, follow_statedb *state.StateDB, followupInterrupt *atomic.Bool) {
+	bc.prefetcher.Prefetch(follow_block, follow_statedb, vm.Config{}, followupInterrupt)
+}
