@@ -169,10 +169,10 @@ func (c *CacheConfig) triedbConfig() *triedb.Config {
 // defaultCacheConfig are the default caching values if none are specified by the
 // user (also used during testing).
 var defaultCacheConfig = &CacheConfig{
-	TrieCleanLimit: 256,
-	TrieDirtyLimit: 256,
+	TrieCleanLimit: 1024,
+	TrieDirtyLimit: 1024,
 	TrieTimeLimit:  5 * time.Minute,
-	SnapshotLimit:  256,
+	SnapshotLimit:  1024,
 	SnapshotWait:   true,
 	StateScheme:    rawdb.HashScheme,
 }
@@ -2458,4 +2458,8 @@ func (bc *BlockChain) SetTrieFlushInterval(interval time.Duration) {
 // GetTrieFlushInterval gets the in-memory tries flushAlloc interval
 func (bc *BlockChain) GetTrieFlushInterval() time.Duration {
 	return time.Duration(bc.flushInterval.Load())
+}
+
+func (bc *BlockChain) RunPrefetcherBen(follow_block *types.Block, follow_statedb *state.StateDB, followupInterrupt *atomic.Bool) {
+	bc.prefetcher.Prefetch(follow_block, follow_statedb, vm.Config{}, followupInterrupt)
 }
