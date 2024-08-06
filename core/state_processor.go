@@ -107,11 +107,6 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		allLogs = append(allLogs, receipt.Logs...)
 	}
 
-	startTime := time.Now()
-	roothash := statedb.IntermediateRoot(false)
-	dur_time := time.Since(startTime).Nanoseconds()
-	fmt.Println("block final roothash is: ", roothash, "dur_time(ns) is: ", dur_time)
-
 	// Fail if Shanghai not enabled and len(withdrawals) is non-zero.
 	withdrawals := block.Withdrawals()
 	if len(withdrawals) > 0 && !p.config.IsShanghai(block.Number(), block.Time()) {
@@ -119,6 +114,11 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	}
 	// Finalize the block, applying any consensus engine specific extras (e.g. block rewards)
 	p.engine.Finalize(p.bc, header, statedb, block.Transactions(), block.Uncles(), withdrawals)
+
+	startTime := time.Now()
+	roothash := statedb.IntermediateRoot(false)
+	dur_time := time.Since(startTime).Nanoseconds()
+	fmt.Println("block final roothash is: ", roothash, "dur_time(ns) is: ", dur_time)
 
 	return receipts, allLogs, *usedGas, nil, op_count, op_time, op_time_list, op_gas_list
 }
