@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
@@ -105,6 +106,11 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 		receipts = append(receipts, receipt)
 		allLogs = append(allLogs, receipt.Logs...)
 	}
+
+	startTime := time.Now()
+	roothash := statedb.IntermediateRoot(false)
+	dur_time := time.Since(startTime).Nanoseconds()
+	fmt.Println("block final roothash is: ", roothash, "dur_time(ns) is: ", dur_time)
 
 	// Fail if Shanghai not enabled and len(withdrawals) is non-zero.
 	withdrawals := block.Withdrawals()
