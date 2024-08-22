@@ -617,6 +617,7 @@ func (t *Trie) resolveAndTrack(n hashNode, prefix []byte) (node, error) {
 // database and can be used even if the trie doesn't have one.
 func (t *Trie) Hash() common.Hash {
 	hash, cached := t.hashRoot()
+	fmt.Println("trie node: hash: ", hash, "hash.(hashNode): ", hash.(hashNode), "cached: ", cached)
 	t.root = cached
 	return common.BytesToHash(hash.(hashNode))
 }

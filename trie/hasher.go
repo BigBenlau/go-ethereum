@@ -17,6 +17,7 @@
 package trie
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -59,8 +60,10 @@ func returnHasherToPool(h *hasher) {
 func (h *hasher) hash(n node, force bool) (hashed node, cached node) {
 	// Return the cached hash if it's available
 	if hash, _ := n.cache(); hash != nil {
+		fmt.Println("hasher.go hash() print cache found!!")
 		return hash, n
 	}
+	fmt.Println("hasher.go hash() need to walk children")
 	// Trie not processed yet, walk the children
 	switch n := n.(type) {
 	case *shortNode:
