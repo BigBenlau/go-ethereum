@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
@@ -58,6 +59,7 @@ func NewStateProcessor(config *params.ChainConfig, bc *BlockChain, engine consen
 // returns the amount of gas that was used in the process. If any of the
 // transactions failed to execute due to insufficient gas it will return an error.
 func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg vm.Config) (types.Receipts, []*types.Log, uint64, error) {
+	pre_exec_time := time.Now()
 	var (
 		receipts    types.Receipts
 		usedGas     = new(uint64)
@@ -79,14 +81,22 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	if beaconRoot := block.BeaconRoot(); beaconRoot != nil {
 		ProcessBeaconBlockRoot(*beaconRoot, vmenv, statedb)
 	}
+	pre_exec_time_diff := time.Since(pre_exec_time)
+	fmt.Println("Pre-exec time:", pre_exec_time_diff)
+
 	// Iterate over and process the individual transactions
+	exec_start_time := time.Now()
 	for i, tx := range block.Transactions() {
 		msg, err := TransactionToMessage(tx, signer, header.BaseFee)
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
 		}
 		statedb.SetTxContext(tx.Hash(), i)
+		pre_tx_exec_time := time.Since(exec_start_time)
+		fmt.Printf("Pre-tx %d exec time: %s\n", i, pre_tx_exec_time)
 		receipt, err := applyTransaction(msg, p.config, gp, statedb, blockNumber, blockHash, tx, usedGas, vmenv)
+		exec_time_diff := time.Since(exec_start_time)
+		fmt.Printf("Tx %d exec time: %s\n", i, exec_time_diff)
 		if err != nil {
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
 		}
