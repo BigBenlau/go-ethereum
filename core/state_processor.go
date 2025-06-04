@@ -92,8 +92,6 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 			return nil, nil, 0, fmt.Errorf("could not apply tx %d [%v]: %w", i, tx.Hash().Hex(), err)
 		}
 		statedb.SetTxContext(tx.Hash(), i)
-		pre_tx_exec_time := time.Since(exec_start_time)
-		fmt.Printf("Pre-tx %d exec time: %s\n", i, pre_tx_exec_time)
 		receipt, err := applyTransaction(msg, p.config, gp, statedb, blockNumber, blockHash, tx, usedGas, vmenv)
 		exec_time_diff := time.Since(exec_start_time)
 		fmt.Printf("Tx %d exec time: %s\n", i, exec_time_diff)
